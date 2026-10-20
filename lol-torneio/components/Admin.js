@@ -46,7 +46,7 @@ export default function Admin() {
   async function save(data = d) {
     setMsg('Salvando…');
     const r = await fetch('/api/data', { method: 'PUT', body: JSON.stringify(data) });
-    setMsg(r.ok ? 'Alterações publicadas no site.' : 'Erro: ' + (await r.text()));
+    setMsg(r.ok ? (data._persistent === false ? 'Salvo só na memória: o site público pode não mostrar. Conecte o Upstash.' : 'Alterações publicadas no site.') : 'Erro: ' + (await r.text()));
     if (r.ok) setDirty(false);
     if (r.status === 401) setAuth(false);
   }
@@ -83,7 +83,7 @@ export default function Admin() {
         <div><b>{d.teams.length}</b><small>equipes</small></div><div><b>{done}/10</b><small>partidas da fase 1</small></div>
         <div><b>{B.done ? 'Concluída' : 'Em andamento'}</b><small>classificatória</small></div><div><b>{B.champion ? d.teams.find((t) => t.id === B.champion)?.name : '—'}</b><small>campeão</small></div>
       </div>
-      {!d._persistent && <p className="warn">Banco de dados não conectado: as alterações ficam só em memória e podem ser perdidas. Conecte um Upstash Redis na Vercel (veja o README).</p>}
+      {!d._persistent && <p className="warn">Banco de dados não conectado: as alterações ficam só em memória e podem ser perdidas. As variáveis do Upstash (URL e TOKEN REST) não foram encontradas neste ambiente: confira se estão marcadas para Production e Preview e faça um Redeploy (veja o README).</p>}
       <div className="atabs">{TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
 
       {tab === 'torneio' && <div className="panel grid">

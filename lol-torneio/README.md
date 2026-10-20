@@ -54,6 +54,7 @@ npm run build && npm start   # versão de produção
 
 - **Painel mostra "A variável ADMIN_PASSWORD não está definida"**: defina-a (Vercel ou `.env.local`) e reinicie/redeploy.
 - **"Não foi possível abrir o painel"**: clique em *Tentar novamente*; se persistir, confira os logs da Vercel e as variáveis do Upstash.
+- **Alterei no admin e o site principal não muda**: o painel mostra o aviso vermelho de "Banco de dados não conectado". Na Vercel cada requisição pode cair em uma instância diferente, então sem Redis a edição não chega ao site. Em Storage, conecte o banco ao projeto (Production + Preview), confira em Settings → Environment Variables se existem as variáveis `*_REST_API_URL` e `*_REST_API_TOKEN` (qualquer prefixo é aceito) e faça **Redeploy**.
 - **Edições somem depois de um tempo**: o Redis não está conectado (o painel avisa em amarelo). Siga o passo 3 acima.
 - **Imagens**: logos enviados pelo painel devem ter até 150 KB (ou cole uma URL). O limite total de dados salvos é 3 MB.
 
