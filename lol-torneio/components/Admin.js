@@ -31,9 +31,9 @@ export default function Admin() {
   };
   const boot = () => {
     setFail(''); setAuth(null);
-    fetch('/api/login', { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error('Falha ao verificar o login (' + r.status + ')'); return r.json(); })
+    fetch('/api/login', { cache: 'no-store', signal: AbortSignal.timeout(10000) }).then((r) => { if (!r.ok) throw new Error('Falha ao verificar o login (' + r.status + ')'); return r.json(); })
       .then((j) => { setCfg(j.configured !== false); setAuth(!!j.auth); if (j.auth) return load(); })
-      .catch((e) => setFail(e.message || 'Erro de conexão'));
+      .catch((e) => setFail(e.name === 'TimeoutError' ? 'O servidor não respondeu em 10 s (a API /api/login não está rodando — o site foi publicado como site estático?).' : /JSON/i.test(e.message || '') ? 'A API /api/login não devolveu JSON: o projeto precisa rodar com servidor Next.js (Vercel), não como site estático.' : e.message || 'Erro de conexão'));
   };
   useEffect(boot, []);
   const set = (fn) => { const n = structuredClone(d); fn(n); setD(n); setMsg(''); setDirty(true); };
