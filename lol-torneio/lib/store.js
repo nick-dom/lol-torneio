@@ -1,4 +1,5 @@
 import { SEED } from './seed';
+import { cleanMedia } from './media';
 const KEY = 'lol-tournament-v1';
 const g = globalThis;
 
@@ -41,14 +42,28 @@ export function normalize(d) {
   }));
   const have = Array.isArray(d.matches) ? d.matches.filter(Boolean) : [];
   const matches = base.matches.map((m) => ({ ...m, ...(have.find((x) => x.id === m.id) || {}) }));
-  return { config, teams, matches };
+  // 'media' é novo: dados antigos (sem esse campo) continuam válidos e ganham mídia vazia
+  return { config, teams, matches, media: cleanMedia(d.media) };
 }
-export async function load() {
+// strict=true (usado pelo painel): se o banco falhar, lança erro em vez de devolver os dados padrão,
+// assim o painel nunca mostra dados "zerados" que depois sobrescreveriam os seus ao salvar.
+export async function load(strict = false) {
   try {
     if (isPersistent()) { const v = await cmd(['GET', KEY]); if (v) return normalize(typeof v === 'string' ? JSON.parse(v) : v); }
     else if (g.__lol) return normalize(g.__lol);
-  } catch (e) { console.error('[store.load]', e); }
+  } catch (e) { console.error('[store.load]', e); if (strict) throw e; }
   return structuredClone(SEED);
 }
 // Lança erro se o Redis falhar (antes o erro era silencioso)
 export async function save(d) { if (isPersistent()) await cmd(['SET', KEY, JSON.stringify(d)]); else g.__lol = d; }
+
+// ---- Imagens da área de mídia: cada uma em sua própria chave (não pesa no JSON principal) ----
+const IMG = 'lol-img:';
+export async function putImg(id, type, b64) { if (isPersistent()) await cmd(['SET', IMG + id, type + ';' + b64]); else (g.__lolImg ||= new Map()).set(id, type + ';' + b64); }
+export async function getImg(id) {
+  const v = isPersistent() ? await cmd(['GET', IMG + id]) : g.__lolImg?.get(id);
+  if (!v) return null;
+  const i = v.indexOf(';');
+  return { type: v.slice(0, i), buf: Buffer.from(v.slice(i + 1), 'base64') };
+}
+export async function delImg(id) { try { if (isPersistent()) await cmd(['DEL', IMG + id]); else g.__lolImg?.delete(id); } catch (e) { console.error('[store.delImg]', e); } }

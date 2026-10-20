@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { SEED } from '@/lib/seed';
 import { standings, bracket, KO } from '@/lib/logic';
+import { ytId, pk, MAX_IMG } from '@/lib/media';
 
 const num = (v) => (v === '' ? null : Math.max(0, Number(v)));
 function img(file, cb) {
@@ -9,6 +10,23 @@ function img(file, cb) {
   if (file.size > 150000) return alert('Imagem acima de 150 KB. Use um arquivo menor ou cole uma URL.');
   const r = new FileReader(); r.onload = () => cb(r.result); r.readAsDataURL(file);
 }
+
+// Reduz automaticamente fotos grandes para caber em 400 KB (GIFs não são recomprimidos)
+async function prep(file, maxDim) {
+  if (!/^image\//.test(file.type)) throw new Error('Escolha um arquivo de imagem (JPG, PNG, WEBP ou GIF).');
+  if (file.size <= MAX_IMG && /^image\/(jpeg|png|webp|gif)$/.test(file.type)) return file;
+  if (file.type === 'image/gif') throw new Error('GIF acima de 400 KB. Reduza o GIF ou envie como JPG/PNG.');
+  let bmp; try { bmp = await createImageBitmap(file); } catch { throw new Error('Não consegui ler esta imagem. Use JPG, PNG ou WEBP.'); }
+  let scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+  for (let i = 0; i < 8; i++) {
+    const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(bmp.width * scale)); cv.height = Math.max(1, Math.round(bmp.height * scale));
+    const x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(bmp, 0, 0, cv.width, cv.height);
+    for (const q of [0.88, 0.78, 0.68, 0.58, 0.48]) { const b = await new Promise((r) => cv.toBlob(r, 'image/jpeg', q)); if (b && b.size <= MAX_IMG - 2048) return b; }
+    scale *= 0.8;
+  }
+  throw new Error('Não foi possível reduzir a imagem para 400 KB.');
+}
+const today = () => new Date().toISOString().slice(0, 10);
 
 // Fora do componente: definir dentro fazia os campos perderem o foco a cada tecla
 const F = ({ l, children }) => <label className="f"><span>{l}</span>{children}</label>;
@@ -24,6 +42,9 @@ export default function Admin() {
   useEffect(() => { const h = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } }; addEventListener('beforeunload', h); return () => removeEventListener('beforeunload', h); }, [dirty]);
   const [fail, setFail] = useState('');
   const [cfg, setCfg] = useState(true);
+  const [vf, setVf] = useState({ title: '', url: '', caption: '' });
+  const [pf, setPf] = useState({ title: '', caption: '' });
+  const [busy, setBusy] = useState('');
   const load = async () => {
     const r = await fetch('/api/data', { cache: 'no-store' });
     if (!r.ok) throw new Error('Falha ao carregar os dados (' + r.status + ')');
@@ -37,6 +58,34 @@ export default function Admin() {
   };
   useEffect(boot, []);
   const set = (fn) => { const n = structuredClone(d); fn(n); setD(n); setMsg(''); setDirty(true); };
+  // Versão assíncrona-segura do set (usa o estado mais recente e não apaga a mensagem)
+  const setf = (fn) => { setD((p) => { const n = structuredClone(p); n.media ||= { items: [], players: {} }; fn(n); return n; }); setDirty(true); };
+  async function up(file, maxDim) {
+    try {
+      setBusy('Enviando imagem…');
+      const blob = await prep(file, maxDim);
+      const r = await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+      if (!r.ok) throw new Error(await r.text());
+      return (await r.json()).id;
+    } catch (e) { setMsg('Erro: ' + (e.message || e)); return null; } finally { setBusy(''); }
+  }
+  function addVideo() {
+    const yt = ytId(vf.url);
+    if (!yt) return setMsg('Erro: link do YouTube inválido. Cole o link do vídeo (youtu.be/… ou youtube.com/watch?v=…).');
+    setf((n) => { n.media.items.unshift({ id: 'm' + Date.now(), kind: 'video', yt, title: vf.title.trim(), caption: vf.caption.trim(), date: today() }); });
+    setVf({ title: '', url: '', caption: '' }); setMsg('Vídeo adicionado. Clique em “Salvar e publicar” para ele aparecer no site.');
+  }
+  async function addPhoto(e) {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const id = await up(f, 1600); if (!id) return;
+    setf((n) => { n.media.items.unshift({ id: 'm' + Date.now(), kind: 'photo', img: id, title: pf.title.trim(), caption: pf.caption.trim(), date: today() }); });
+    setPf({ title: '', caption: '' }); setMsg('Foto enviada. Clique em “Salvar e publicar” para ela aparecer no site.');
+  }
+  async function playerPhoto(e, teamId, nick) {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const id = await up(f, 800); if (!id) return;
+    setf((n) => { n.media.players[pk(teamId, nick)] = id; }); setMsg('Foto de ' + nick + ' enviada. Clique em “Salvar e publicar”.');
+  }
   async function login(e) {
     e.preventDefault(); setErr('');
     const r = await fetch('/api/login', { method: 'POST', body: JSON.stringify({ password: pw }) });
@@ -66,7 +115,7 @@ export default function Admin() {
 
   const c = d.config, B = bracket(d), st = standings(d);
   const done = d.matches.filter((m) => m.phase === 'g' && m.sa != null && m.sb != null).length;
-  const TABS = [['torneio', 'Torneio'], ['equipes', 'Equipes'], ['partidas', 'Partidas'], ['regras', 'Regulamento']];
+  const TABS = [['torneio', 'Torneio'], ['equipes', 'Equipes'], ['partidas', 'Partidas'], ['midia', 'Mídia'], ['regras', 'Regulamento']];
   const G = d.matches.filter((m) => m.phase === 'g');
   const warns = [
     ...G.filter((m) => m.sa != null && m.sa === m.sb).map((m) => `Rodada ${m.round}: empate ${m.sa} x ${m.sb} não vale na MD1 (a partida é ignorada na tabela).`),
@@ -131,10 +180,65 @@ export default function Admin() {
         <p className="note">{st.map((r, i) => `${i + 1}º ${d.teams.find((t) => t.id === r.id)?.name} (${r.p} pts)`).join(' · ')}</p>
       </div>}
 
+      {tab === 'midia' && (() => {
+        const M = d.media || { items: [], players: {} };
+        return <div>
+          <div className="panel" style={{ marginBottom: 14 }}>
+            <h3 className="sh">Adicionar vídeo (YouTube)</h3>
+            <p className="note">Envie o vídeo no YouTube Studio, escolha a visibilidade <b>“Não listado”</b>, copie o link e cole abaixo. Quem não tiver o link não encontra o vídeo no YouTube, mas ele aparece aqui na página de Mídia.</p>
+            <div className="grid" style={{ marginTop: 12 }}>
+              <F l="Título"><input value={vf.title} onChange={(e) => setVf({ ...vf, title: e.target.value })} /></F>
+              <F l="Link do vídeo no YouTube"><input value={vf.url} onChange={(e) => setVf({ ...vf, url: e.target.value })} placeholder="https://youtu.be/xxxxxxxxxxx" /></F>
+              <F l="Descrição (opcional)"><input value={vf.caption} onChange={(e) => setVf({ ...vf, caption: e.target.value })} /></F>
+            </div>
+            <button className="btn gold" onClick={addVideo}>Adicionar vídeo</button>
+          </div>
+
+          <div className="panel" style={{ marginBottom: 14 }}>
+            <h3 className="sh">Adicionar foto (até 400 KB)</h3>
+            <p className="note">Fotos maiores que 400 KB são reduzidas automaticamente. Formatos: JPG, PNG, WEBP e GIF.</p>
+            <div className="grid" style={{ marginTop: 12 }}>
+              <F l="Título (opcional)"><input value={pf.title} onChange={(e) => setPf({ ...pf, title: e.target.value })} /></F>
+              <F l="Legenda (opcional)"><input value={pf.caption} onChange={(e) => setPf({ ...pf, caption: e.target.value })} /></F>
+              <F l="Escolher foto"><input type="file" accept="image/*" disabled={!!busy} onChange={addPhoto} /></F>
+            </div>
+            {busy && <p className="note">{busy}</p>}
+          </div>
+
+          <div className="panel" style={{ marginBottom: 14 }}>
+            <h3 className="sh">Publicações ({M.items.length})</h3>
+            {!M.items.length && <p className="note">Nada publicado ainda.</p>}
+            {M.items.map((it, i) => <div className="mrow-m" key={it.id}>
+              {it.kind === 'video' ? <img src={`https://i.ytimg.com/vi/${it.yt}/mqdefault.jpg`} alt="" /> : <img src={`/api/img/${it.img}`} alt="" />}
+              <input placeholder={it.kind === 'video' ? 'Título do vídeo' : 'Título da foto'} value={it.title} onChange={(e) => set((n) => (n.media.items[i].title = e.target.value))} />
+              <input placeholder="Legenda / descrição" value={it.caption} onChange={(e) => set((n) => (n.media.items[i].caption = e.target.value))} />
+              <button className="btn danger sm" onClick={() => confirm('Remover esta publicação?') && set((n) => n.media.items.splice(i, 1))}>Remover</button>
+            </div>)}
+          </div>
+
+          <div className="panel">
+            <h3 className="sh">Fotos dos jogadores</h3>
+            <p className="note">Uma foto por jogador; o nick aparece embaixo dela no site. Os nicks vêm do campo “Titulares” da aba Equipes.</p>
+            {d.teams.map((t) => <div key={t.id} style={{ marginTop: 16 }}>
+              <h4 style={{ fontSize: 22, color: t.color }}>{t.name}</h4>
+              {(t.players || []).length ? <div className="mgrid">{t.players.map((nick) => {
+                const id = M.players[pk(t.id, nick)];
+                return <div className="mcard" key={nick}>
+                  {id ? <img src={`/api/img/${id}`} alt={nick} /> : <div className="noimg">sem foto</div>}
+                  <b>{nick}</b>
+                  <input type="file" accept="image/*" disabled={!!busy} onChange={(e) => playerPhoto(e, t.id, nick)} />
+                  {id && <button className="btn danger sm" onClick={() => set((n) => { delete n.media.players[pk(t.id, nick)]; })}>Remover foto</button>}
+                </div>;
+              })}</div> : <p className="note">Nenhum nick cadastrado. Preencha “Titulares” na aba Equipes.</p>}
+            </div>)}
+          </div>
+        </div>;
+      })()}
+
       {tab === 'regras' && <div className="panel"><F l="Texto do regulamento (cada artigo começa com “## Título”; itens com “- ”)"><textarea rows={26} value={c.rules} onChange={(e) => set((n) => (n.config.rules = e.target.value))} /></F></div>}
 
       <div className="savebar"><span>{msg}</span>
-        <button className="btn" onClick={() => confirm('Restaurar todos os dados padrão? Isso apaga resultados e equipes.') && (setD(structuredClone(SEED)), save(structuredClone(SEED)))}>Restaurar padrão</button>
+        <button className="btn" onClick={() => confirm('Restaurar todos os dados padrão? Isso apaga resultados e equipes.') && (() => { const r = { ...structuredClone(SEED), media: structuredClone(d.media || SEED.media), _persistent: d._persistent }; setD(r); save(r); })()}>Restaurar padrão</button>
         <button className="btn gold" onClick={() => save()}>Salvar e publicar</button></div>
     </div>
   );

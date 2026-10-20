@@ -116,7 +116,7 @@ export default function Site({ data: d }) {
       <Hero c={c} go={go} />
       <nav className="nav"><div className="nav-in">
         {TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => go(k)}>{l}</button>)}
-        <a className="admlink" href="/admin">Painel ADM</a>
+        <a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
       </div></nav>
       <main className="wrap">
         {tab === 'inicio' && <>

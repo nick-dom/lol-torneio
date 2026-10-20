@@ -2,6 +2,7 @@ import { RULES } from './rules';
 const C = ['#3b82f6', '#e84057', '#0acf83', '#9b5cf6', '#f0b232'];
 const R = [['A','B'],['C','D'],['A','C'],['B','E'],['A','D'],['C','E'],['A','E'],['B','D'],['B','C'],['D','E']];
 export const SEED = {
+  media: { items: [], players: {} },
   config: {
     name: 'Copa Nexus de League of Legends',
     subtitle: 'Torneio internacional · 5 equipes · pontos corridos e mata-mata',

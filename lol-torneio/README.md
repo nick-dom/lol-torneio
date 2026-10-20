@@ -10,6 +10,14 @@ Site do torneio com tabela de classificação, resultados, chaveamento automáti
 - **Painel** (`/admin`, protegido por senha): edita tudo sem mexer em código — nome, subtítulo, banner, campeões em destaque, início, link da live (YouTube/Twitch), alerta, formato da final (MD3/MD5), notícias, equipes (nome, sigla, cor, logo, capitão, titulares, prioridade de desempate), partidas/horários/placares e o texto do regulamento.
 - **Regras automáticas**: pontos corridos em MD1 (3 pts por vitória), folga sem pontos; desempate por vitórias → confronto direto → saldo → partida extra (prioridade manual). Top 4 avança, 5º é eliminado. SF1: 1º x 4º, SF2: 2º x 3º (MD3); final MD3/MD5 e disputa de 3º lugar (MD1).
 
+## Página de Mídia (`/midia`)
+
+- **Vídeos**: envie no YouTube Studio com visibilidade **Não listado**, copie o link e cole no painel (aba **Mídia**). O vídeo toca dentro do site.
+- **Fotos**: até **400 KB** (fotos maiores são reduzidas automaticamente pelo painel). JPG, PNG, WEBP ou GIF.
+- **Jogadores**: uma foto por jogador; o nick aparece embaixo. Os nicks vêm do campo *Titulares* da aba Equipes. Se você renomear um nick, reenvie a foto dele.
+- Depois de adicionar, clique em **Salvar e publicar**.
+- As imagens ficam no Upstash, cada uma em sua própria chave (`lol-img:*`), sem pesar nos dados principais (`lol-tournament-v1`). Atualizar o código **não apaga** os dados já salvos.
+
 ## Variáveis de ambiente
 
 | Variável | Obrigatória | Para quê |
