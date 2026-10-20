@@ -22,13 +22,26 @@ export default function Admin() {
   const [err, setErr] = useState('');
   const [dirty, setDirty] = useState(false);
   useEffect(() => { const h = (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } }; addEventListener('beforeunload', h); return () => removeEventListener('beforeunload', h); }, [dirty]);
-  const load = async () => setD(await (await fetch('/api/data', { cache: 'no-store' })).json());
-  useEffect(() => { fetch('/api/login').then((r) => r.json()).then((j) => { setAuth(j.auth); if (j.auth) load(); }); }, []);
+  const [fail, setFail] = useState('');
+  const [cfg, setCfg] = useState(true);
+  const load = async () => {
+    const r = await fetch('/api/data', { cache: 'no-store' });
+    if (!r.ok) throw new Error('Falha ao carregar os dados (' + r.status + ')');
+    setD(await r.json());
+  };
+  const boot = () => {
+    setFail(''); setAuth(null);
+    fetch('/api/login', { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error('Falha ao verificar o login (' + r.status + ')'); return r.json(); })
+      .then((j) => { setCfg(j.configured !== false); setAuth(!!j.auth); if (j.auth) return load(); })
+      .catch((e) => setFail(e.message || 'Erro de conexão'));
+  };
+  useEffect(boot, []);
   const set = (fn) => { const n = structuredClone(d); fn(n); setD(n); setMsg(''); setDirty(true); };
   async function login(e) {
     e.preventDefault(); setErr('');
     const r = await fetch('/api/login', { method: 'POST', body: JSON.stringify({ password: pw }) });
-    if (r.ok) { setAuth(true); load(); } else setErr(await r.text());
+    if (!r.ok) return setErr(await r.text());
+    setAuth(true); load().catch((x) => setFail(x.message));
   }
   async function save(data = d) {
     setMsg('Salvando…');
@@ -39,11 +52,13 @@ export default function Admin() {
   }
   const out = async () => { await fetch('/api/login', { method: 'DELETE' }); setAuth(false); };
 
+  if (fail) return <div className="adm-login"><div className="panel"><h2>Não foi possível abrir o painel</h2><p className="err">{fail}</p><button className="btn gold" onClick={boot}>Tentar novamente</button><a href="/" className="back">Voltar ao site</a></div></div>;
   if (auth === null) return <div className="adm-login"><p>Carregando…</p></div>;
   if (!auth) return (
     <div className="adm-login"><form onSubmit={login} className="panel">
       <h2>Painel administrativo</h2><p className="note">Acesso restrito à organização do torneio.</p>
-      <input type="password" placeholder="Senha de administrador" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus />
+      {!cfg && <p className="err">A variável ADMIN_PASSWORD não está definida no servidor. Defina-a (veja o README) e reinicie/redeploy.</p>}
+      <input type="password" autoComplete="current-password" placeholder="Senha de administrador" value={pw} onChange={(e) => setPw(e.target.value)} autoFocus />
       {err && <p className="err">{err}</p>}<button className="btn gold">Entrar</button><a href="/" className="back">Voltar ao site</a>
     </form></div>
   );
@@ -66,7 +81,7 @@ export default function Admin() {
         <div className="row"><a className="btn" href="/" target="_blank">Ver site</a><button className="btn" onClick={out}>Sair</button></div></header>
       <div className="stats">
         <div><b>{d.teams.length}</b><small>equipes</small></div><div><b>{done}/10</b><small>partidas da fase 1</small></div>
-        <div><b>{B.done ? 'Concluída' : 'Em andamento'}</b><small>classificatória</small></div><div><b>{B.champion ? B.M && d.teams.find((t) => t.id === B.champion)?.name : '—'}</b><small>campeão</small></div>
+        <div><b>{B.done ? 'Concluída' : 'Em andamento'}</b><small>classificatória</small></div><div><b>{B.champion ? d.teams.find((t) => t.id === B.champion)?.name : '—'}</b><small>campeão</small></div>
       </div>
       {!d._persistent && <p className="warn">Banco de dados não conectado: as alterações ficam só em memória e podem ser perdidas. Conecte um Upstash Redis na Vercel (veja o README).</p>}
       <div className="atabs">{TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
@@ -90,7 +105,7 @@ export default function Admin() {
           <F l="Cor"><input type="color" value={t.color} onChange={(e) => set((n) => (n.teams[i].color = e.target.value))} /></F>
           <F l="Capitão (contato)"><input value={t.captain} onChange={(e) => set((n) => (n.teams[i].captain = e.target.value))} /></F>
           <F l="Titulares (IDs, separados por vírgula)"><input value={(t.players || []).join(', ')} onChange={(e) => set((n) => (n.teams[i].players = e.target.value.split(',').map((s) => s.trim()).filter(Boolean)))} /></F>
-          <F l="Logo (URL ou envio até 150 KB)"><input value={t.logo.startsWith('data:') ? '(imagem enviada)' : t.logo} onChange={(e) => set((n) => (n.teams[i].logo = e.target.value))} /><input type="file" accept="image/*" onChange={(e) => img(e.target.files[0], (u) => set((n) => (n.teams[i].logo = u)))} /></F>
+          <F l="Logo (URL ou envio até 150 KB)"><input value={(t.logo || '').startsWith('data:') ? '(imagem enviada)' : t.logo} onChange={(e) => set((n) => (n.teams[i].logo = e.target.value))} /><input type="file" accept="image/*" onChange={(e) => img(e.target.files[0], (u) => set((n) => (n.teams[i].logo = u)))} /></F>
           <F l="Prioridade na partida extra (1 = melhor)"><input type="number" min="1" value={t.tb ?? ''} onChange={(e) => set((n) => (n.teams[i].tb = num(e.target.value)))} /></F>
           <button className="btn danger" onClick={() => confirm('Remover esta equipe?') && set((n) => { n.teams.splice(i, 1); n.matches.forEach((m) => { if (m.a === t.id) m.a = ''; if (m.b === t.id) m.b = ''; }); })}>Remover</button>
         </div>)}

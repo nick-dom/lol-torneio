@@ -1,7 +1,8 @@
 import { cookies } from 'next/headers';
 import { sign, valid, safeEq } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
-const opt = 'HttpOnly; Path=/; SameSite=Lax' + (process.env.NODE_ENV === 'production' ? '; Secure' : '');
+// Secure só quando a conexão é HTTPS (senão Safari/localhost descartam o cookie e o login "não pega")
+const opt = (req) => 'HttpOnly; Path=/; SameSite=Lax' + ((req.headers.get('x-forwarded-proto') || new URL(req.url).protocol.replace(':', '')) === 'https' ? '; Secure' : '');
 const tries = globalThis.__tries || (globalThis.__tries = new Map());
 export async function GET() { return Response.json({ auth: valid(cookies().get('adm')?.value), configured: !!process.env.ADMIN_PASSWORD }); }
 export async function POST(req) {
@@ -14,6 +15,6 @@ export async function POST(req) {
   await new Promise((r) => setTimeout(r, 400));
   if (!safeEq(password || '', pw)) { tries.set(ip, [...t, Date.now()]); return new Response('Senha incorreta', { status: 401 }); }
   tries.delete(ip);
-  return new Response('{"ok":true}', { headers: { 'Set-Cookie': `adm=${sign()}; ${opt}; Max-Age=604800`, 'Content-Type': 'application/json' } });
+  return new Response('{"ok":true}', { headers: { 'Set-Cookie': `adm=${sign()}; ${opt(req)}; Max-Age=604800`, 'Content-Type': 'application/json' } });
 }
-export async function DELETE() { return new Response('{"ok":true}', { headers: { 'Set-Cookie': `adm=; ${opt}; Max-Age=0` } }); }
+export async function DELETE(req) { return new Response('{"ok":true}', { headers: { 'Set-Cookie': `adm=; ${opt(req)}; Max-Age=0` } }); }
