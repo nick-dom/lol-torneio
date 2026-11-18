@@ -141,7 +141,7 @@ export default function Admin() {
         <F l="Imagem do banner (URL)"><input value={c.bannerImage} onChange={(e) => set((n) => (n.config.bannerImage = e.target.value))} /></F>
         <F l="Campeões em destaque (nomes do Data Dragon, separados por vírgula)"><input value={c.featured} onChange={(e) => set((n) => (n.config.featured = e.target.value))} /></F>
         <F l="Início do torneio"><input type="datetime-local" value={c.startDate} onChange={(e) => set((n) => (n.config.startDate = e.target.value))} /></F>
-        <F l="Link da transmissão (YouTube ou Twitch)"><input value={c.stream} onChange={(e) => set((n) => (n.config.stream = e.target.value))} placeholder="https://twitch.tv/canal" /></F>
+        <F l="Link da transmissão (YouTube, Twitch, Kick, Facebook, Vimeo, .m3u8, .mp4 ou qualquer outro link/embed)"><input inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={c.stream} onChange={(e) => set((n) => (n.config.stream = e.target.value.slice(0, 2000)))} placeholder="https://twitch.tv/canal" /></F>
         <F l="Texto do banner de alerta (vazio oculta)"><input value={c.alert} onChange={(e) => set((n) => (n.config.alert = e.target.value))} /></F>
         <F l="Formato da final"><select value={c.finalFormat} onChange={(e) => set((n) => (n.config.finalFormat = e.target.value))}><option>MD3</option><option>MD5</option></select></F>
         <F l="Notícias e avisos (uma por linha)"><textarea rows={5} value={(c.news || []).join('\n')} onChange={(e) => set((n) => (n.config.news = e.target.value.split('\n').filter(Boolean)))} /></F>

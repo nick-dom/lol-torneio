@@ -1,5 +1,6 @@
 import './globals.css';
-export const metadata = { title: 'Copa Nexus — Torneio de League of Legends', description: 'Tabela, resultados, regras e chaveamento do torneio.' };
+export const metadata = { title: 'Copa Nexus — Torneio de League of Legends', description: 'Tabela, resultados, regras e chaveamento do torneio.', formatDetection: { telephone: false, email: false, address: false } };
+export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#010a13', colorScheme: 'dark' };
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">

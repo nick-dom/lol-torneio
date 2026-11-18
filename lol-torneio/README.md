@@ -10,6 +10,10 @@ Site do torneio com tabela de classificação, resultados, chaveamento automáti
 - **Painel** (`/admin`, protegido por senha): edita tudo sem mexer em código — nome, subtítulo, banner, campeões em destaque, início, link da live (YouTube/Twitch), alerta, formato da final (MD3/MD5), notícias, equipes (nome, sigla, cor, logo, capitão, titulares, prioridade de desempate), partidas/horários/placares e o texto do regulamento.
 - **Regras automáticas**: pontos corridos em MD1 (3 pts por vitória), folga sem pontos; desempate por vitórias → confronto direto → saldo → partida extra (prioridade manual). Top 4 avança, 5º é eliminado. SF1: 1º x 4º, SF2: 2º x 3º (MD3); final MD3/MD5 e disputa de 3º lugar (MD1).
 
+## Transmissão ao vivo (qualquer link)
+
+No painel (aba **Torneio**), cole o link da live e salve. O site converte sozinho e toca **dentro da página**: YouTube (vídeo, `/live/`, canal `/channel/UC…/live`), Twitch (canal, vídeo, clipe), Kick, Facebook, Vimeo, Dailymotion, streams `.m3u8` (HLS), arquivos `.mp4/.webm` e o código `<iframe>` de qualquer plataforma. Qualquer outro link `https://` é tentado em um iframe isolado (sandbox); se o site de origem bloquear incorporação, o botão **Abrir em nova aba** fica disponível. Links `@canal/live` do YouTube não são incorporáveis: use o link do vídeo da live.
+
 ## Página de Mídia (`/midia`)
 
 - **Vídeos**: envie no YouTube Studio com visibilidade **Não listado**, copie o link e cole no painel (aba **Mídia**). O vídeo toca dentro do site.
@@ -18,23 +22,6 @@ Site do torneio com tabela de classificação, resultados, chaveamento automáti
 - Depois de adicionar, clique em **Salvar e publicar**.
 - As imagens ficam no Upstash, cada uma em sua própria chave (`lol-img:*`), sem pesar nos dados principais (`lol-tournament-v1`). Atualizar o código **não apaga** os dados já salvos.
 
-## Variáveis de ambiente
-
-| Variável | Obrigatória | Para quê |
-|---|---|---|
-| `ADMIN_PASSWORD` | **Sim** | Senha do painel `/admin`. Sem ela não é possível entrar. |
-| `SESSION_SECRET` | Recomendada | Texto longo e aleatório para assinar a sessão do admin. |
-| `KV_REST_API_URL` e `KV_REST_API_TOKEN` (ou `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`) | Recomendadas | Banco Upstash Redis. **Sem ele, as edições ficam só na memória do servidor e são perdidas.** |
-
-Um modelo está em `.env.example`.
-
-## Publicar na Vercel
-
-1. Suba esta pasta para um repositório no GitHub e importe o repositório na Vercel (ou use `npx vercel`).
-2. Em **Settings → Environment Variables**, defina `ADMIN_PASSWORD` e `SESSION_SECRET`.
-3. Em **Storage / Marketplace**, adicione **Upstash Redis** ao projeto. A Vercel preenche `KV_REST_API_URL` e `KV_REST_API_TOKEN` sozinha.
-4. Faça **Redeploy** (variáveis só valem em novos deploys).
-5. Abra `https://SEU-SITE.vercel.app/admin`, entre com a senha, edite e clique em **Salvar e publicar**.
 
 ## Rodar localmente
 
@@ -47,8 +34,6 @@ npm install
 Crie um arquivo `.env.local` na raiz (funciona em Windows, macOS e Linux):
 
 ```
-ADMIN_PASSWORD=teste
-SESSION_SECRET=qualquer-texto-longo
 ```
 
 Depois:
@@ -58,19 +43,3 @@ npm run dev      # desenvolvimento → http://localhost:3000  (painel em /admin)
 npm run build && npm start   # versão de produção
 ```
 
-## Solução de problemas
-
-- **Painel mostra "A variável ADMIN_PASSWORD não está definida"**: defina-a (Vercel ou `.env.local`) e reinicie/redeploy.
-- **"Não foi possível abrir o painel"**: clique em *Tentar novamente*; se persistir, confira os logs da Vercel e as variáveis do Upstash.
-- **Alterei no admin e o site principal não muda**: o painel mostra o aviso vermelho de "Banco de dados não conectado". Na Vercel cada requisição pode cair em uma instância diferente, então sem Redis a edição não chega ao site. Em Storage, conecte o banco ao projeto (Production + Preview), confira em Settings → Environment Variables se existem as variáveis `*_REST_API_URL` e `*_REST_API_TOKEN` (qualquer prefixo é aceito) e faça **Redeploy**.
-- **Edições somem depois de um tempo**: o Redis não está conectado (o painel avisa em amarelo). Siga o passo 3 acima.
-- **Imagens**: logos enviados pelo painel devem ter até 150 KB (ou cole uma URL). O limite total de dados salvos é 3 MB.
-
-## Estrutura
-
-```
-app/            páginas (/ e /admin) e rotas de API (/api/data, /api/login)
-components/     Site.js (público) e Admin.js (painel)
-lib/            logic.js (classificação e chaveamento), rules.js (regulamento padrão),
-                seed.js (dados iniciais), store.js (persistência), auth.js (sessão)
-```

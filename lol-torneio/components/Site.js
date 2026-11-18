@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import LivePlayer from '@/components/LivePlayer';
 import { standings, bracket, teamMap, rounds, groups, win, played, KO, LBL } from '@/lib/logic';
 
 const TABS = [['inicio', 'Início'], ['equipes', 'Equipes'], ['resultados', 'Resultados'], ['regras', 'Regras'], ['mata', 'Mata-mata']];
@@ -47,11 +48,11 @@ const Panel = ({ title, children, right, cls = '' }) => <section className={'pan
 function Standings({ d, st, done }) {
   const T = teamMap(d);
   return (
-    <table className="tbl">
+    <div className="tscroll"><table className="tbl">
       <thead><tr><th>#</th><th>Time</th><th>J</th><th>V</th><th>D</th><th>Saldo</th><th>Pts</th></tr></thead>
       <tbody>{st.map((r, i) => <tr key={r.id} className={i < 4 ? 'q' : done ? 'out' : ''}>
         <td className="pos">{i + 1}º</td><td><span className="tm"><Logo t={T[r.id]} s={28} />{T[r.id]?.name}</span></td><td>{r.j}</td><td>{r.w}</td><td>{r.l}</td><td>{r.diff > 0 ? '+' : ''}{r.diff}</td><td className="pts">{r.p}</td></tr>)}</tbody>
-    </table>
+    </table></div>
   );
 }
 
@@ -85,17 +86,6 @@ function Bracket({ B, T }) {
   );
 }
 
-function Embed({ url }) {
-  const [src, setSrc] = useState(null);
-  useEffect(() => {
-    let m = (url || '').match(/(?:youtu\.be\/|v=|embed\/|live\/)([\w-]{11})/);
-    if (m) return setSrc(`https://www.youtube.com/embed/${m[1]}`);
-    m = (url || '').match(/twitch\.tv\/(\w+)/);
-    setSrc(m ? `https://player.twitch.tv/?channel=${m[1]}&parent=${location.hostname}` : null);
-  }, [url]);
-  return src ? <iframe className="player" src={src} allowFullScreen title="Transmissão ao vivo" /> : <div className="player off"><span>Transmissão offline</span><small>O link da live aparece aqui quando a organização publicar.</small></div>;
-}
-
 export default function Site({ data: d }) {
   const router = useRouter();
   useEffect(() => { const i = setInterval(() => { if (!document.hidden) router.refresh(); }, 30000); return () => clearInterval(i); }, [router]);
@@ -122,7 +112,7 @@ export default function Site({ data: d }) {
         {tab === 'inicio' && <>
           <div className="g2">
             <Panel title="Fase 1 — Classificação"><Standings d={d} st={st} done={B.done} /><p className="note">Os 4 primeiros avançam ao mata-mata. O 5º colocado é eliminado.</p></Panel>
-            <Panel title="Transmissão ao vivo"><Embed url={c.stream} /></Panel>
+            <Panel title="Transmissão ao vivo"><LivePlayer url={c.stream} /></Panel>
           </div>
           <div className="g2">
             <Panel title="Próximos confrontos">{next.length ? next.map((m) => <MatchRow key={m.id} m={m} T={T} name={m._n} />) : <p className="note">Nenhum confronto pendente.</p>}</Panel>
