@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import LivePlayer from '@/components/LivePlayer';
 import { SEED } from '@/lib/seed';
 import { standings, bracket, KO } from '@/lib/logic';
 import { ytId, pk, MAX_IMG } from '@/lib/media';
@@ -25,6 +26,13 @@ async function prep(file, maxDim) {
     scale *= 0.8;
   }
   throw new Error('Não foi possível reduzir a imagem para 400 KB.');
+}
+// Prévia da live no painel (espera o usuário parar de digitar para não recarregar o player a cada tecla)
+function StreamPreview({ url }) {
+  const [u, setU] = useState('');
+  useEffect(() => { const t = setTimeout(() => setU(url || ''), 700); return () => clearTimeout(t); }, [url]);
+  if (!u.trim()) return null;
+  return <div className="live-prev"><p className="note" style={{ marginTop: 0 }}>Prévia — é assim que o público verá:</p><LivePlayer url={u} /></div>;
 }
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -99,6 +107,8 @@ export default function Admin() {
     if (r.ok) setDirty(false);
     if (r.status === 401) setAuth(false);
   }
+  const saveRef = useRef(save); saveRef.current = save;
+  useEffect(() => { const k = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveRef.current(); } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
   const out = async () => { await fetch('/api/login', { method: 'DELETE' }); setAuth(false); };
 
   if (fail) return <div className="adm-login"><div className="panel"><h2>Não foi possível abrir o painel</h2><p className="err">{fail}</p><button className="btn gold" onClick={boot}>Tentar novamente</button><a href="/" className="back">Voltar ao site</a></div></div>;
@@ -142,6 +152,7 @@ export default function Admin() {
         <F l="Campeões em destaque (nomes do Data Dragon, separados por vírgula)"><input value={c.featured} onChange={(e) => set((n) => (n.config.featured = e.target.value))} /></F>
         <F l="Início do torneio"><input type="datetime-local" value={c.startDate} onChange={(e) => set((n) => (n.config.startDate = e.target.value))} /></F>
         <F l="Link da transmissão (YouTube, Twitch, Kick, Facebook, Vimeo, .m3u8, .mp4 ou qualquer outro link/embed)"><input inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={c.stream} onChange={(e) => set((n) => (n.config.stream = e.target.value.slice(0, 2000)))} placeholder="https://twitch.tv/canal" /></F>
+        <StreamPreview url={c.stream} />
         <F l="Texto do banner de alerta (vazio oculta)"><input value={c.alert} onChange={(e) => set((n) => (n.config.alert = e.target.value))} /></F>
         <F l="Formato da final"><select value={c.finalFormat} onChange={(e) => set((n) => (n.config.finalFormat = e.target.value))}><option>MD3</option><option>MD5</option></select></F>
         <F l="Notícias e avisos (uma por linha)"><textarea rows={5} value={(c.news || []).join('\n')} onChange={(e) => set((n) => (n.config.news = e.target.value.split('\n').filter(Boolean)))} /></F>
@@ -239,7 +250,7 @@ export default function Admin() {
 
       <div className="savebar"><span>{msg}</span>
         <button className="btn" onClick={() => confirm('Restaurar todos os dados padrão? Isso apaga resultados e equipes.') && (() => { const r = { ...structuredClone(SEED), media: structuredClone(d.media || SEED.media), _persistent: d._persistent }; setD(r); save(r); })()}>Restaurar padrão</button>
-        <button className="btn gold" onClick={() => save()}>Salvar e publicar</button></div>
+        <button className="btn gold" onClick={() => save()} title="Ctrl+S">Salvar e publicar</button></div>
     </div>
   );
 }

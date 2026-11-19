@@ -4,11 +4,31 @@ import { useRouter } from 'next/navigation';
 import LivePlayer from '@/components/LivePlayer';
 import { standings, bracket, teamMap, rounds, groups, win, played, KO, LBL } from '@/lib/logic';
 
-const TABS = [['inicio', 'Início'], ['equipes', 'Equipes'], ['resultados', 'Resultados'], ['regras', 'Regras'], ['mata', 'Mata-mata']];
+const TABS = [['inicio', 'Início'], ['live', 'Ao vivo'], ['equipes', 'Equipes'], ['resultados', 'Resultados'], ['regras', 'Regras'], ['mata', 'Mata-mata']];
 export const fmt = (t) => (t ? `${t.slice(8, 10)}/${t.slice(5, 7)} às ${t.slice(11, 16)}` : 'A definir');
 
+// Gera um arquivo .ics (abre no Google Agenda, Apple Calendário, Outlook…). Horário "flutuante" = o mesmo horário local do torneio.
+const p2 = (n) => String(n).padStart(2, '0');
+const icsStamp = (d) => `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}T${p2(d.getHours())}${p2(d.getMinutes())}00`;
+function addToCalendar(title, time, mins = 120) {
+  const s = new Date(time + ':00'); if (isNaN(s)) return;
+  const e = new Date(s.getTime() + mins * 6e4);
+  const body = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Copa Nexus//PT', 'BEGIN:VEVENT', `UID:${Date.now()}${Math.random().toString(36).slice(2)}@copa-nexus`, `DTSTAMP:${icsStamp(new Date())}`, `DTSTART:${icsStamp(s)}`, `DTEND:${icsStamp(e)}`, `SUMMARY:${title.replace(/[,;\\]/g, ' ')}`, 'BEGIN:VALARM', 'TRIGGER:-PT15M', 'ACTION:DISPLAY', 'DESCRIPTION:Começa em 15 minutos', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'text/calendar;charset=utf-8' })); a.download = 'partida.ics';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+function Share() {
+  const [ok, setOk] = useState(false);
+  const go = async () => {
+    const data = { title: document.title, url: location.origin + '/' };
+    try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); setOk(true); setTimeout(() => setOk(false), 2200); } } catch {}
+  };
+  return <button className="btn" onClick={go} aria-live="polite">{ok ? 'Link copiado ✓' : 'Compartilhar'}</button>;
+}
+
 export const Logo = ({ t, s = 34 }) =>
-  t ? (t.logo ? <img className="logo" src={t.logo} alt="" style={{ width: s, height: s }} /> : <span className="logo tag" style={{ width: s, height: s, background: t.color, fontSize: s * 0.46 }}>{t.tag}</span>) : <span className="logo ghost" style={{ width: s, height: s }}>?</span>;
+  t ? (t.logo ? <img className="logo" src={t.logo} alt="" loading="lazy" decoding="async" style={{ width: s, height: s }} /> : <span className="logo tag" style={{ width: s, height: s, background: t.color, fontSize: s * 0.46 }}>{t.tag}</span>) : <span className="logo ghost" style={{ width: s, height: s }}>?</span>;
 
 function Countdown({ to }) {
   const [n, setN] = useState(null);
@@ -33,7 +53,7 @@ function Hero({ c, go }) {
           <h1>{c.name}</h1>
           <p className="sub">{c.subtitle}</p>
           <Countdown to={c.startDate} />
-          <div className="cta"><button className="btn gold" onClick={() => go('mata')}>Ver chaveamento</button><button className="btn" onClick={() => go('regras')}>Ler regulamento</button></div>
+          <div className="cta"><button className="btn gold" onClick={() => go('mata')}>Ver chaveamento</button><button className="btn" onClick={() => go('regras')}>Ler regulamento</button><Share /></div>
         </div>
         <div className="strip" aria-hidden>
           {champs.map((n, i) => <div key={n} className="pane" style={{ '--i': i, backgroundImage: `url(https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${n}_0.jpg)` }} />)}
@@ -61,7 +81,7 @@ function MatchRow({ m, T, name }) {
   const nm = (k, i) => T[m[k]]?.name || (LBL[m.id] ? LBL[m.id][i] : 'A definir');
   return (
     <div className="mrow">
-      <div className="mt"><b>{name}</b>{fmt(m.time)}</div>
+      <div className="mt"><b>{name}</b>{fmt(m.time)}{!done && m.time && T[m.a] && T[m.b] && <button className="cal" onClick={() => addToCalendar(`${T[m.a].name} x ${T[m.b].name} — ${name}`, m.time)}>+ Agenda</button>}</div>
       <div className={'side' + (w && w === m.a ? ' w' : '')}><span>{nm('a', 0)}</span><Logo t={T[m.a]} s={30} /></div>
       <div className="score">{done ? <><b>{m.sa}</b><i>x</i><b>{m.sb}</b></> : <i>vs</i>}</div>
       <div className={'side r' + (w && w === m.b ? ' w' : '')}><Logo t={T[m.b]} s={30} /><span>{nm('b', 1)}</span></div>
@@ -91,6 +111,7 @@ export default function Site({ data: d }) {
   useEffect(() => { const i = setInterval(() => { if (!document.hidden) router.refresh(); }, 30000); return () => clearInterval(i); }, [router]);
   const [tab, setTab] = useState('inicio');
   const [rd, setRd] = useState(1);
+  const [tf, setTf] = useState('');
   const go = (t) => { setTab(t); history.replaceState(null, '', '#' + t); scrollTo({ top: 0 }); };
   useEffect(() => { const h = location.hash.slice(1); if (TABS.some((t) => t[0] === h)) setTab(h); }, []);
   const T = teamMap(d), B = bracket(d), st = B.st, c = d.config;
@@ -104,11 +125,11 @@ export default function Site({ data: d }) {
     <>
       {c.alert && <div className="alert"><i />{c.alert}</div>}
       <Hero c={c} go={go} />
-      <nav className="nav"><div className="nav-in">
-        {TABS.map(([k, l]) => <button key={k} className={tab === k ? 'on' : ''} onClick={() => go(k)}>{l}</button>)}
+      <nav className="nav" aria-label="Seções"><div className="nav-in" role="tablist">
+        {TABS.filter(([k]) => k !== 'live' || c.stream).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => go(k)}>{k === 'live' && <i className="ldot" aria-hidden />}{l}</button>)}
         <a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
       </div></nav>
-      <main className="wrap">
+      <main id="main" className="wrap">
         {tab === 'inicio' && <>
           <div className="g2">
             <Panel title="Fase 1 — Classificação"><Standings d={d} st={st} done={B.done} /><p className="note">Os 4 primeiros avançam ao mata-mata. O 5º colocado é eliminado.</p></Panel>
@@ -120,6 +141,10 @@ export default function Site({ data: d }) {
           </div>
           <Panel title="Fase 2 — Mata-mata"><Bracket B={B} T={T} /></Panel>
         </>}
+        {tab === 'live' && <>
+          <Panel title="Transmissão ao vivo"><LivePlayer url={c.stream} /></Panel>
+          <Panel title="Próximos confrontos">{next.length ? next.map((m) => <MatchRow key={m.id} m={m} T={T} name={m._n} />) : <p className="note">Nenhum confronto pendente.</p>}</Panel>
+        </>}
         {tab === 'equipes' && <div className="teams">{d.teams.map((t) => {
           const r = st.findIndex((x) => x.id === t.id), s = st[r];
           return <article key={t.id} className="team" style={{ '--c': t.color }}>
@@ -129,9 +154,13 @@ export default function Site({ data: d }) {
           </article>;
         })}</div>}
         {tab === 'resultados' && <Panel title="Resultados e tabela">
-          <div className="chips">{rs.map((r) => <button key={r} className={rd === r ? 'on' : ''} onClick={() => setRd(r)}>Rodada {r}</button>)}</div>
-          {groups(d).filter((m) => m.round === rd).map((m) => <MatchRow key={m.id} m={m} T={T} name={`Rodada ${m.round}`} />)}
-          {(() => { const rest = d.teams.find((t) => !groups(d).some((m) => m.round === rd && (m.a === t.id || m.b === t.id))); return rest && d.teams.length % 2 ? <p className="note">Folga na rodada {rd}: {rest.name}</p> : null; })()}
+          <div className="chips">
+            <select className="tsel" aria-label="Filtrar por equipe" value={tf} onChange={(e) => setTf(e.target.value)}><option value="">Todas as equipes</option>{d.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select>
+            {!tf && rs.map((r) => <button key={r} className={rd === r ? 'on' : ''} onClick={() => setRd(r)}>Rodada {r}</button>)}
+          </div>
+          {tf && (() => { const mine = all.filter((m) => m.a === tf || m.b === tf).sort((a, b) => (a.time || '9').localeCompare(b.time || '9')); return mine.length ? mine.map((m) => <MatchRow key={m.id} m={m} T={T} name={m._n} />) : <p className="note">Nenhuma partida para esta equipe.</p>; })()}
+          {!tf && groups(d).filter((m) => m.round === rd).map((m) => <MatchRow key={m.id} m={m} T={T} name={`Rodada ${m.round}`} />)}
+          {!tf && (() => { const rest = d.teams.find((t) => !groups(d).some((m) => m.round === rd && (m.a === t.id || m.b === t.id))); return rest && d.teams.length % 2 ? <p className="note">Folga na rodada {rd}: {rest.name}</p> : null; })()}
           <h3 className="sh">Mata-mata</h3>{['sf1', 'sf2', 'third', 'final'].map((id) => <MatchRow key={id} m={B.M[id]} T={T} name={KO[id]} />)}
           <h3 className="sh">Classificação geral</h3><Standings d={d} st={st} done={B.done} />
         </Panel>}
