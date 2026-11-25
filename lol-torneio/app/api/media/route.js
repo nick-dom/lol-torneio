@@ -1,5 +1,5 @@
-import { cookies } from 'next/headers';
-import { valid } from '@/lib/auth';
+import { getSession } from '@/lib/session';
+import { can } from '@/lib/perm';
 import { putImg } from '@/lib/store';
 import { MAX_IMG } from '@/lib/media';
 import crypto from 'crypto';
@@ -14,7 +14,8 @@ function kind(b) {
   return null;
 }
 export async function POST(req) {
-  if (!valid(cookies().get('adm')?.value)) return new Response('Não autorizado', { status: 401 });
+  const s = await getSession();
+  if (!s || !can(s.r, 'midia')) return new Response('Não autorizado', { status: 401 });
   const buf = Buffer.from(await req.arrayBuffer());
   if (!buf.length) return new Response('Arquivo vazio', { status: 400 });
   if (buf.length > MAX_IMG) return new Response(`Imagem acima de 400 KB (${Math.round(buf.length / 1024)} KB).`, { status: 413 });

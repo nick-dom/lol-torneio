@@ -1,121 +1,72 @@
-# Copa Nexus — Torneio de League of Legends
+# Copa Nexus
 
-Site oficial do torneio Copa Nexus, com classificação, resultados, calendário de partidas, chaveamento automático, regulamento e painel administrativo.
+Site do torneio de League of Legends Copa Nexus: classificação, resultados, chaveamento, regulamento, transmissão ao vivo e mídia. Painel de administração em `/admin`.
 
-Desenvolvido com **Next.js 14 (App Router)** e preparado para deploy na Vercel.
+Projeto de fãs, sem vínculo com a Riot Games. League of Legends e as artes dos campeões pertencem à Riot Games, Inc.
 
-Projeto independente de fãs, sem vínculo com a Riot Games. Os assets de campeões são fornecidos pelo Data Dragon.
+## Stack
 
-## Funcionalidades
+Next.js 14 (App Router), React 18, Upstash Redis, hospedagem na Vercel.
 
-### Site público
-- Classificação das equipes.
-- Resultados e calendário de partidas.
-- Fase de pontos corridos e mata-mata.
-- Equipes e jogadores.
-- Notícias e avisos.
-- Transmissão ao vivo.
-- Contagem regressiva para o torneio.
+## Variáveis de ambiente
 
-### Painel administrativo (`/admin`)
-Painel protegido por senha para gerenciamento do torneio, incluindo:
+| Variável | Obrigatória | Uso |
+|---|---|---|
+| `ADMIN_PASSWORD` | sim | Senha do `/admin` |
+| `SESSION_SECRET` | recomendada | Assina o cookie de sessão (string longa e aleatória) |
+| `UPSTASH_REDIS_REST_URL` | sim, em produção | Banco de dados |
+| `UPSTASH_REDIS_REST_TOKEN` | sim, em produção | Banco de dados |
+| `NEXT_PUBLIC_SITE_URL` | não | URL pública, usada em sitemap e Open Graph |
+| `RIOT_API_KEY` | não | Chave da Riot API (elo e importação de partidas). Sem ela, os botões da Riot não aparecem |
+| `RIOT_PLATFORM`, `RIOT_REGION` | não | Padrão `br1` e `americas` |
 
-- Informações gerais, banner e identidade visual.
-- Campeões em destaque.
-- Equipes, jogadores, logos e cores.
-- Partidas, horários e placares.
-- Notícias, avisos e transmissão.
-- Regulamento e configurações da competição.
-- Gerenciamento de mídia.
+Chaves de desenvolvimento da Riot expiram em 24 h; para uso contínuo é preciso registrar o produto no portal da Riot e obter uma chave permanente.
 
-### Sistema de competição
-- Fase de pontos corridos em MD1.
-- 3 pontos por vitória.
-- Folgas sem pontuação.
-- Desempate por vitórias, confronto direto, saldo e critérios manuais.
-- Os quatro melhores avançam para o mata-mata.
-- O quinto colocado é eliminado.
+`KV_REST_API_URL` e `KV_REST_API_TOKEN` também são aceitas no lugar das variáveis do Upstash.
 
-**Mata-mata:**
-- Semifinal 1: 1º × 4º.
-- Semifinal 2: 2º × 3º.
-- Semifinais em MD3.
-- Final em MD3 ou MD5.
-- Disputa de terceiro lugar em MD1.
+Sem o Redis, os dados ficam só na memória do servidor e se perdem a qualquer reinício.
 
-### Transmissão e mídia
-- Incorporação de transmissões compatíveis.
-- Link externo para transmissões que não permitem incorporação.
-- Galeria de vídeos e fotos.
-- Agenda de partidas com opção de adicionar ao calendário.
-- Compartilhamento do site e partidas.
+## Acesso ao painel
 
-## Tecnologias
+`/admin` aceita dois tipos de login:
 
-- Next.js 14
-- React
-- JavaScript
-- Upstash Redis para persistência
-- Vercel para hospedagem
-- Data Dragon para assets de League of Legends
+- Senha mestre: deixe o usuário em branco (ou `admin`) e use `ADMIN_PASSWORD`. Acesso total.
+- Usuários cadastrados em Admin → Usuários, cada um com um papel: Superadministrador, Administrador, Organizador, Árbitro, Estatístico, Equipe de transmissão ou Representante de equipe.
 
-## Configuração
+## Rodar localmente
 
-Requisitos:
-- Node.js 18.17 ou superior.
-- npm.
-- Banco de dados Upstash Redis para persistência.
-
-Variáveis de ambiente necessárias:
-
-| Variável | Finalidade |
-|---|---|
-| `ADMIN_PASSWORD` | Autenticação do painel administrativo |
-| `SESSION_SECRET` | Proteção e assinatura de sessão |
-| `KV_REST_API_URL` | Conexão com o banco |
-| `KV_REST_API_TOKEN` | Autenticação do banco |
-
-Utilize o arquivo `.env.example` como referência para configurar o ambiente local.
-
-## Execução local
-
-Instale as dependências:
+Requer Node.js 18.17 ou superior.
 
 ```bash
 npm install
-```
-
-Configure as variáveis de ambiente no arquivo `.env.local` e execute:
-
-```bash
+cp .env.example .env.local   # preencha os valores
 npm run dev
 ```
 
-O site estará disponível em `http://localhost:3000`.
+Abre em http://localhost:3000.
 
-## Deploy
+## Publicar na Vercel
 
-1. Envie o projeto para um repositório GitHub.
-2. Importe o repositório na Vercel.
-3. Configure as variáveis de ambiente.
-4. Conecte o Upstash Redis.
-5. Realize o deploy.
-6. Acesse `/admin` para configurar e publicar o torneio.
+1. Suba o projeto para um repositório no GitHub.
+2. Na Vercel, importe o repositório.
+3. Adicione as variáveis de ambiente (Production e Preview).
+4. Conecte um banco Upstash Redis (Storage → Marketplace), que preenche as variáveis do banco.
+5. Faça o deploy. Se adicionar variáveis depois, faça Redeploy.
+6. Acesse `/admin`, entre com `ADMIN_PASSWORD` e configure o torneio.
+
+O projeto precisa de servidor Node (Vercel). Não funciona como site estático.
 
 ## Estrutura
 
-```text
-app/          Páginas e rotas de API
-components/    Interface pública e painel administrativo
-lib/          Lógica, regras, dados iniciais,
-              persistência e autenticação
+```
+app/          páginas e rotas de API
+components/   interface pública e painel
+lib/          regras, classificação, banco, autenticação
+public/       ícones e imagem de compartilhamento
 ```
 
-## Segurança e manutenção
+## Segurança
 
-- Não compartilhe arquivos `.env` ou credenciais.
-- Nunca exponha tokens, senhas ou secrets no frontend.
-- Mantenha a autenticação do painel habilitada.
-- Dados persistentes devem ser armazenados no Redis.
-- Faça backup dos dados antes de alterações estruturais.
-- Atualizações devem preservar os dados existentes e evitar mudanças desnecessárias na lógica do torneio.
+- Nunca versione `.env` nem exponha senhas e tokens.
+- Troque a senha padrão do `.env.example` antes de publicar.
+- Faça backup dos dados antes de mudanças estruturais.
