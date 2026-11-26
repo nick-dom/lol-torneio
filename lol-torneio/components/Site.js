@@ -1,15 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Menu from '@/components/Menu';
+import Menu, { SECTIONS } from '@/components/Menu';
 import LivePlayer from '@/components/LivePlayer';
 import { Logo } from '@/components/Logo';
 import { opggUrl, slug } from '@/lib/players';
 import { standings, bracket, teamMap, rounds, groups, win, played, KO, LBL } from '@/lib/logic';
 
 const TABS = [['inicio', 'Início'], ['live', 'Ao vivo'], ['resultados', 'Partidas'], ['classificacao', 'Classificação'], ['mata', 'Playoffs'], ['equipes', 'Equipes'], ['jogadores', 'Jogadores'], ['regras', 'Regulamento']];
-// Navegação inferior (celular): as 4 principais + menu Mais
-const BOTTOM = [['inicio', 'Início', 'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'], ['resultados', 'Partidas', 'M4 5h16v14H4zM4 10h16M9 5v14'], ['classificacao', 'Tabela', 'M4 6h16M4 12h16M4 18h16'], ['/estatisticas', 'Estatísticas', 'M5 21V10M12 21V4M19 21v-7']];
 export const fmt = (t) => (t ? `${t.slice(8, 10)}/${t.slice(5, 7)} às ${t.slice(11, 16)}` : 'A definir');
 
 // Gera um arquivo .ics (abre no Google Agenda, Apple Calendário, Outlook…). Horário "flutuante" = o mesmo horário local do torneio.
@@ -108,21 +106,34 @@ function Bracket({ B, T }) {
   );
 }
 
+// Atalhos da página inicial: acesso rápido a todas as áreas
+function Shortcuts({ go, stream }) {
+  const IN = [['classificacao', 'Classificação', 'Tabela e pontos'], ['resultados', 'Partidas', 'Resultados e agenda'], ['mata', 'Playoffs', 'Chaveamento'], ['equipes', 'Equipes', 'Times e elencos'], ['jogadores', 'Jogadores', 'Perfis e fotos'], ['regras', 'Regulamento', 'Regras oficiais'], ...(stream ? [['live', 'Ao vivo', 'Assistir agora']] : [])];
+  const OUT = [['/transmissoes', 'Transmissões', 'Calendário e narradores'], ['/noticias', 'Notícias', 'Novidades'], ['/vods', 'Partidas gravadas', 'VODs e melhores momentos'], ['/estatisticas', 'Estatísticas', 'Rankings'], ['/votacao', 'Votação de MVP', 'Vote e veja o MVP'], ['/hall-da-fama', 'Hall da Fama', 'Campeões e recordes'], ['/temporadas', 'Temporadas', 'Edições anteriores'], ['/draft', 'Draft', 'Picks e bans'], ['/simulador', 'Simulador', 'Simule a tabela']];
+  const T = ({ k, h, t, s: sub }) => (h ? <a className="sc" href={h}><b>{t}</b><small>{sub}</small></a> : <button className="sc" onClick={() => go(k)}><b>{t}</b><small>{sub}</small></button>);
+  return (
+    <section className="short" aria-label="Atalhos">
+      <h2 className="sh">Acompanhe o torneio</h2><div className="scgrid">{IN.map(([k, t, sub]) => <T key={k} k={k} t={t} s={sub} />)}</div>
+      <h2 className="sh">Mais do campeonato</h2><div className="scgrid">{OUT.map(([h, t, sub]) => <T key={h} h={h} t={t} s={sub} />)}<a className="sc gold" href="/inscricao"><b>Inscrever equipe</b><small>Participe da Copa</small></a></div>
+    </section>
+  );
+}
+
 export default function Site({ data: d, extras = {} }) {
   const router = useRouter();
   useEffect(() => { const i = setInterval(() => { if (!document.hidden) router.refresh(); }, 30000); return () => clearInterval(i); }, [router]);
   const [tab, setTab] = useState('inicio');
   const [rd, setRd] = useState(1);
   const [tf, setTf] = useState('');
-  const go = (t) => { setTab(t); setMore(false); history.replaceState(null, '', '#' + t); scrollTo({ top: 0 }); };
+  const go = (t) => { setTab(t); history.replaceState(null, '', '#' + t); scrollTo({ top: 0 }); };
   useEffect(() => { const h = location.hash.slice(1); if (TABS.some((t) => t[0] === h)) setTab(h); }, []);
+  const label = (SECTIONS.find((x) => x[0] === tab) || [])[1] || '';
   const T = teamMap(d), B = bracket(d), st = B.st, c = d.config;
   const all = [...groups(d).map((m) => ({ ...m, _n: `Rodada ${m.round}` })), ...['sf1', 'sf2', 'third', 'final'].map((id) => ({ ...B.M[id], _n: KO[id] }))];
   const next = all.filter((m) => !played(m)).sort((a, b) => (a.time || '9').localeCompare(b.time || '9')).slice(0, 4);
   const rs = rounds(d);
   const rules = (c.rules || '').split(/^## /m).filter(Boolean).map((s) => { const [t, ...b] = s.split('\n'); return [t.trim(), b.filter((x) => x.trim())]; });
   const [open, setOpen] = useState(0);
-  const [more, setMore] = useState(false);
   const [theme, setTheme] = useState('dark');
   useEffect(() => { try { setTheme(localStorage.getItem('theme') === 'light' ? 'light' : 'dark'); } catch {} }, []);
   const flip = () => { const n = theme === 'light' ? 'dark' : 'light'; setTheme(n); document.documentElement.dataset.theme = n; try { localStorage.setItem('theme', n); } catch {} };
@@ -131,25 +142,33 @@ export default function Site({ data: d, extras = {} }) {
     <>
       {c.alert && <div className="alert"><i />{c.alert}</div>}
       <Hero c={c} go={go} />
-      <nav className="nav snav" aria-label="Seções"><div className="nav-in" role="tablist">
-        {TABS.filter(([k]) => k !== 'live' || c.stream).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => go(k)}>{k === 'live' && <i className="ldot" aria-hidden />}{l}</button>)}
-        <a className="tablink" href="/estatisticas">Estatísticas</a><a className="tablink" href="/draft">Draft</a><a className="tablink" href="/simulador">Simulador</a><button className="themebtn" onClick={flip} aria-label="Alternar tema claro/escuro">{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
-      </div><Menu /></nav>
+      <nav className="nav topbar" aria-label="Navegação principal"><div className="nav-in">
+        <button className="brand" onClick={() => go('inicio')}>{c.name || 'Copa Nexus'}</button>
+        {tab !== 'inicio' && <span className="crumb"><button onClick={() => go('inicio')}>Início</button> › <b>{label}</b></span>}
+      </div><Menu sections={SECTIONS.filter(([k]) => k !== 'live' || c.stream)} active={tab} onSelect={go} theme={theme} onTheme={flip} /></nav>
       <main id="main" className="wrap">
         {tab === 'inicio' && <>
+          <Shortcuts go={go} stream={c.stream} />
           <div className="g2">
-            <Panel title="Fase 1 — Classificação"><Standings d={d} st={st} done={B.done} /><p className="note">Os 4 primeiros avançam ao mata-mata. O 5º colocado é eliminado.</p></Panel>
+            <Panel title="Próximos confrontos" right={<button className="btn sm" onClick={() => go('resultados')}>Ver todas</button>}>{next.length ? next.map((m) => <MatchRow key={m.id} m={m} T={T} name={m._n} />) : <p className="note">Nenhum confronto pendente.</p>}</Panel>
             <Panel title="Transmissão ao vivo"><LivePlayer url={c.stream} /></Panel>
           </div>
           <div className="g2">
-            <Panel title="Próximos confrontos">{next.length ? next.map((m) => <MatchRow key={m.id} m={m} T={T} name={m._n} />) : <p className="note">Nenhum confronto pendente.</p>}</Panel>
-            <Panel title="Notícias e avisos">{(c.news || []).map((n, i) => <p className="news" key={i}>{n}</p>)}</Panel>
-          </div>
-          {(extras.broadcasts?.length > 0 || extras.news?.length > 0 || extras.vagas) && <div className="g2">
+            <Panel title="Fase 1 — Classificação" right={<button className="btn sm" onClick={() => go('classificacao')}>Detalhes</button>}><Standings d={d} st={st} done={B.done} /><p className="note">Os 4 primeiros avançam ao mata-mata. O 5º colocado é eliminado.</p></Panel>
             <Panel title="Próximas transmissões" right={<a className="btn sm" href="/transmissoes">Calendário</a>}>{extras.broadcasts?.length ? extras.broadcasts.map((b) => <a key={b.id} className="news" style={{ display: 'block' }} href={'/transmissao/' + b.id}><b>{b.when}</b> · {b.title}{b.live && ' — AO VIVO'}</a>) : <p className="note">Nenhuma transmissão agendada.</p>}</Panel>
-            <Panel title="Últimas notícias" right={<a className="btn sm" href="/noticias">Ver todas</a>}>{extras.news?.length ? extras.news.map((n) => <a key={n.slug} className="news" style={{ display: 'block' }} href={'/noticias/' + n.slug}><b>{n.title}</b>{n.subtitle ? <><br /><small className="mut">{n.subtitle}</small></> : null}</a>) : <p className="note">Sem notícias publicadas.</p>}{extras.vagas && <p className="note">Vagas preenchidas: <b>{extras.vagas.filled}/{extras.vagas.total}</b> · <a href="/inscricao">Inscrever equipe</a></p>}</Panel>
-          </div>}
-          <Panel title="Fase 2 — Mata-mata"><Bracket B={B} T={T} /></Panel>
+          </div>
+          <div className="g2">
+            <Panel title="Notícias e avisos" right={<a className="btn sm" href="/noticias">Ver todas</a>}>
+              {(c.news || []).map((n, i) => <p className="news" key={i}>{n}</p>)}
+              {extras.news?.map((n) => <a key={n.slug} className="news" style={{ display: 'block' }} href={'/noticias/' + n.slug}><b>{n.title}</b>{n.subtitle ? <><br /><small className="mut">{n.subtitle}</small></> : null}</a>)}
+              {!(c.news || []).length && !extras.news?.length && <p className="note">Sem avisos no momento.</p>}
+            </Panel>
+            <Panel title="Participe">
+              {extras.vagas && <p>Vagas preenchidas: <b>{extras.vagas.filled}/{extras.vagas.total}</b></p>}
+              <div className="row" style={{ flexWrap: 'wrap' }}><a className="btn gold" href="/inscricao">Inscrever equipe</a><a className="btn" href="/votacao">Votar no MVP</a><a className="btn" href="/notificacoes">Receber avisos</a></div>
+            </Panel>
+          </div>
+          <Panel title="Fase 2 — Mata-mata" right={<button className="btn sm" onClick={() => go('mata')}>Detalhes</button>}><Bracket B={B} T={T} /></Panel>
         </>}
         {tab === 'live' && <>
           <Panel title="Transmissão ao vivo"><LivePlayer url={c.stream} /></Panel>
@@ -197,14 +216,6 @@ export default function Site({ data: d, extras = {} }) {
         {tab === 'mata' && <><Panel title="Fase 2 — Mata-mata"><Bracket B={B} T={T} /><p className="note">Semifinais: 1º x 4º e 2º x 3º, em MD3. Final em {B.M.final.bo === 5 ? 'MD5' : 'MD3'}; 3º lugar em MD1.</p></Panel>
           <Panel title="Partidas do mata-mata">{['sf1', 'sf2', 'third', 'final'].map((id) => <MatchRow key={id} m={B.M[id]} T={T} name={KO[id]} />)}</Panel></>}
       </main>
-      <nav className="bnav" aria-label="Navegação principal">
-        {BOTTOM.map(([k, l, ic]) => k[0] === '/' ? <a key={k} href={k}><svg viewBox="0 0 24 24" aria-hidden><path d={ic} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" /></svg>{l}</a> : <button key={k} className={tab === k ? 'on' : ''} onClick={() => go(k)}><svg viewBox="0 0 24 24" aria-hidden><path d={ic} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" /></svg>{l}</button>)}
-        <button className={more || ['mata', 'equipes', 'jogadores', 'regras', 'live'].includes(tab) ? 'on' : ''} onClick={() => setMore(!more)} aria-expanded={more}><svg viewBox="0 0 24 24" aria-hidden><path d="M5 12h.01M12 12h.01M19 12h.01" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" /></svg>Mais</button>
-      </nav>
-      {more && <div className="sheet" onClick={() => setMore(false)}><div className="sheet-in" onClick={(e) => e.stopPropagation()} role="menu">
-        {[['mata', 'Playoffs'], ['equipes', 'Equipes'], ['jogadores', 'Jogadores'], ['regras', 'Regulamento'], ...(c.stream ? [['live', 'Ao vivo']] : [])].map(([k, l]) => <button key={k} role="menuitem" onClick={() => go(k)}>{l}</button>)}
-        <a href="/draft">Draft</a><a href="/simulador">Simulador</a><a href="/noticias">Notícias</a><a href="/transmissoes">Transmissões</a><a href="/vods">VODs</a><a href="/votacao">Votação MVP</a><a href="/hall-da-fama">Hall da Fama</a><a href="/temporadas">Temporadas</a><a href="/inscricao">Inscrição</a><a href="/notificacoes">Notificações</a><a href="/midia">Mídia</a><button onClick={flip}>{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a href="/admin">Painel ADM</a>
-      </div></div>}
       <footer className="foot">Boa sorte a todos! · Projeto de fãs, não afiliado à Riot Games. League of Legends e as artes dos campeões são marcas e propriedade da Riot Games, Inc.</footer>
     </>
   );

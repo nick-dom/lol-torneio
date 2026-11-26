@@ -9,7 +9,7 @@ export const fmt = (t) => (t ? `${t.slice(8, 10)}/${t.slice(5, 7)} às ${t.slice
 export function Page({ title, children }) {
   return (
     <>
-      <nav className="nav"><div className="nav-in"><a className="navlink" href="/">← Site do torneio</a><a className="navlink" href="/#equipes">Equipes</a><a className="navlink" href="/#jogadores">Jogadores</a></div><Menu /></nav>
+      <nav className="nav topbar" aria-label="Navegação principal"><div className="nav-in"><a className="brand" href="/" style={{ textDecoration: 'none' }}>Copa Nexus</a></div><Menu /></nav>
       <main id="main" className="wrap">{children}</main>
       <div className="foot"><a className="navlink" href="/">← Voltar ao site do torneio</a><p style={{ marginTop: 14 }}>Projeto de fãs, não afiliado à Riot Games. League of Legends é marca da Riot Games, Inc.</p></div>
     </>
