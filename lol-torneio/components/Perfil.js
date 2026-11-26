@@ -1,16 +1,15 @@
+import Menu from '@/components/Menu';
 import { Logo } from '@/components/Logo';
 import { standings, teamMap, win, played, KO } from '@/lib/logic';
 import { slug } from '@/lib/players';
 
 export const fmt = (t) => (t ? `${t.slice(8, 10)}/${t.slice(5, 7)} às ${t.slice(11, 16)}` : 'A definir');
 
-export const MAIS = [['/noticias', 'Notícias'], ['/transmissoes', 'Transmissões'], ['/vods', 'VODs'], ['/votacao', 'Votação MVP'], ['/hall-da-fama', 'Hall da Fama'], ['/temporadas', 'Temporadas'], ['/inscricao', 'Inscrição'], ['/notificacoes', 'Notificações']];
-export const NavMais = () => <>{MAIS.map(([h, l]) => <a key={h} className="navlink" href={h}>{l}</a>)}</>;
 // Estrutura comum das páginas de perfil
 export function Page({ title, children }) {
   return (
     <>
-      <nav className="nav"><div className="nav-in"><a className="navlink" href="/">← Site do torneio</a><a className="navlink" href="/#equipes">Equipes</a><a className="navlink" href="/#jogadores">Jogadores</a><NavMais /></div></nav>
+      <nav className="nav"><div className="nav-in"><a className="navlink" href="/">← Site do torneio</a><a className="navlink" href="/#equipes">Equipes</a><a className="navlink" href="/#jogadores">Jogadores</a></div><Menu /></nav>
       <main id="main" className="wrap">{children}</main>
       <div className="foot"><a className="navlink" href="/">← Voltar ao site do torneio</a><p style={{ marginTop: 14 }}>Projeto de fãs, não afiliado à Riot Games. League of Legends é marca da Riot Games, Inc.</p></div>
     </>

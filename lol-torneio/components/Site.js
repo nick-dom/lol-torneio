@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Menu from '@/components/Menu';
 import LivePlayer from '@/components/LivePlayer';
 import { Logo } from '@/components/Logo';
 import { opggUrl, slug } from '@/lib/players';
@@ -132,8 +133,8 @@ export default function Site({ data: d, extras = {} }) {
       <Hero c={c} go={go} />
       <nav className="nav snav" aria-label="Seções"><div className="nav-in" role="tablist">
         {TABS.filter(([k]) => k !== 'live' || c.stream).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => go(k)}>{k === 'live' && <i className="ldot" aria-hidden />}{l}</button>)}
-        <a className="tablink" href="/estatisticas">Estatísticas</a><a className="tablink" href="/draft">Draft</a><a className="tablink" href="/simulador">Simulador</a><a className="tablink" href="/noticias">Notícias</a><a className="tablink" href="/transmissoes">Transmissões</a><a className="tablink" href="/votacao">Votação</a><a className="tablink" href="/hall-da-fama">Hall da Fama</a><a className="tablink" href="/temporadas">Temporadas</a><a className="tablink" href="/inscricao">Inscrição</a><button className="themebtn" onClick={flip} aria-label="Alternar tema claro/escuro">{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
-      </div></nav>
+        <a className="tablink" href="/estatisticas">Estatísticas</a><a className="tablink" href="/draft">Draft</a><a className="tablink" href="/simulador">Simulador</a><button className="themebtn" onClick={flip} aria-label="Alternar tema claro/escuro">{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
+      </div><Menu /></nav>
       <main id="main" className="wrap">
         {tab === 'inicio' && <>
           <div className="g2">
