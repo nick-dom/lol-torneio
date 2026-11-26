@@ -1,5 +1,6 @@
 import './globals.css';
 import { SITE } from '@/lib/site';
+import PwaClient from '@/components/PwaClient';
 const title = 'Copa Nexus — Torneio de League of Legends';
 const description = 'Tabela, resultados, regras, chaveamento e transmissão ao vivo do torneio.';
 export const metadata = {
@@ -24,7 +25,7 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://ddragon.leagueoflegends.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
-      <body><a className="skip" href="#main">Ir para o conteúdo</a>{children}</body>
+      <body><a className="skip" href="#main">Ir para o conteúdo</a>{children}<PwaClient /></body>
     </html>
   );
 }

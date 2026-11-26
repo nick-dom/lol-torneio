@@ -224,7 +224,7 @@ export default function Admin() {
   return (
     <div className="adm">
       <header className="adm-h"><div><h1>Painel administrativo</h1><small>{c.name}</small></div>
-        <div className="row"><span className="mut" style={{ alignSelf: 'center', fontSize: 13 }}>{me?.name} · {ROLES[role]}</span><a className="btn" href="/" target="_blank">Ver site</a><button className="btn" onClick={out}>Sair</button></div></header>
+        <div className="row"><span className="mut" style={{ alignSelf: 'center', fontSize: 13 }}>{me?.name} · {ROLES[role]}</span><a className="btn gold" href="/admin/gestao">Gestão ampliada</a><a className="btn" href="/" target="_blank">Ver site</a><button className="btn" onClick={out}>Sair</button></div></header>
       <div className="stats">
         <div><b>{d.teams.length}</b><small>equipes</small></div><div><b>{done}/10</b><small>partidas da fase 1</small></div>
         <div><b>{B.done ? 'Concluída' : 'Em andamento'}</b><small>classificatória</small></div><div><b>{B.champion ? d.teams.find((t) => t.id === B.champion)?.name : '—'}</b><small>campeão</small></div>

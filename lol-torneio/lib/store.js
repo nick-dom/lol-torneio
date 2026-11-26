@@ -25,7 +25,7 @@ function creds() {
 export const isPersistent = () => !!creds();
 export const persistent = isPersistent();
 
-async function cmd(a) {
+export async function cmd(a) {
   const c = creds();
   const r = await fetch(c.url, { method: 'POST', headers: { Authorization: `Bearer ${c.token}` }, body: JSON.stringify(a), cache: 'no-store' });
   const j = await r.json().catch(() => ({}));

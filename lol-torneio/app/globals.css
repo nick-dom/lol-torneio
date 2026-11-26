@@ -248,3 +248,42 @@ img,video,iframe,svg{max-width:100%}
 .champ{margin-top:16px;border:1px solid var(--gold);padding:14px;text-align:center;display:grid;gap:4px}.champ small{color:var(--gold);text-transform:uppercase;letter-spacing:.1em;font-size:12px}.champ b{font:800 32px 'Barlow Condensed';color:var(--gold2);display:flex;gap:10px;justify-content:center;align-items:center}
 @media(max-width:700px){.srowm{grid-template-columns:1fr 1fr}.srowm .sbtns,.srowm .fixed,.srowm .mut{grid-column:1/-1;order:3}}
 [data-theme=light] .sbtn{background:#fff}
+
+/* ===== Etapas 1–5: inscrições, transmissões, notícias, votação, PWA ===== */
+.okmsg{color:#7ff0d0;font-size:14px;margin:8px 0}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:10px 0;cursor:pointer;font-size:14px}.chk input{width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--gold)}
+.chips button[disabled]{opacity:.5}
+.pform{display:grid;grid-template-columns:90px repeat(3,minmax(0,1fr));gap:10px;align-items:end;padding:10px 0;border-bottom:1px solid var(--line)}.pform>b{font:600 17px 'Barlow Condensed';text-transform:uppercase;color:var(--gold2);align-self:center}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}.arow>div:first-child{min-width:0}.arow b{display:block;overflow-wrap:anywhere}.arow small{display:block}
+.btnrow{width:100%;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;color:inherit;cursor:pointer}
+.insc{border:1px solid var(--line);margin-bottom:8px;padding:0 12px;background:#010a1344}.insc .btnrow{border:0;padding:12px 0}.insc-d{padding:4px 0 14px}
+.pend{background:#c8aa6e1a;border:1px solid #c8aa6e66;padding:8px 12px;margin:10px 0;font-size:13px}
+.st{display:inline-flex;align-items:center;gap:6px;font:600 13px 'Barlow Condensed';text-transform:uppercase;padding:2px 10px;border:1px solid var(--line);white-space:nowrap}
+.st.ao_vivo{color:#ff9aa8;border-color:#e8405788}.st.agendada{color:var(--teal);border-color:#0ac8b966}.st.cancelada{color:var(--mut);text-decoration:line-through}
+.st.s-aprovada{color:#7ff0d0;border-color:#0acf8f77}.st.s-rejeitada{color:#ffb4bf;border-color:#e8405777}.st.s-aguardando_correcao{color:var(--gold);border-color:#c8aa6e88}
+.bcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
+.bc{display:grid;gap:8px;align-content:start;padding:14px;background:#010a1388;border:1px solid var(--line);text-decoration:none;color:inherit}.bc:hover{border-color:var(--gold)}.bc.ao_vivo{border-color:#e84057aa}.bc.cancelada{opacity:.6}
+.bc-t{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}.bc h3{margin:0;font:700 22px 'Barlow Condensed';color:var(--gold2)}
+.bc-m{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.bc-m i{font-style:normal;color:var(--mut)}.bc-m.big{font:700 26px 'Barlow Condensed';gap:12px;margin:10px 0}.bc-m.big i{color:var(--gold);font-size:34px}
+.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}.ngrid.feat{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.ncard{display:grid;grid-template-rows:auto 1fr;background:#010a1388;border:1px solid var(--line);text-decoration:none;color:inherit;overflow:hidden}.ncard:hover{border-color:var(--gold)}
+.ncard img,.ncard .noimg{width:100%;aspect-ratio:16/9;object-fit:cover;background:#0a1428;display:grid;place-items:center;color:var(--mut)}.ncard div{padding:12px 14px;display:grid;gap:4px;align-content:start}.ncard h3{margin:0;font:700 22px/1.15 'Barlow Condensed';color:var(--gold2)}.ncard p{margin:0;color:var(--mut);font-size:14px}.ncard small{color:var(--teal);text-transform:uppercase;font-size:11px;letter-spacing:.06em}
+.news-art{max-width:760px;margin-inline:auto}.news-art h1{font-size:clamp(28px,6vw,44px);margin:4px 0 8px;line-height:1.1}.news-art .sub{font-size:18px;color:var(--mut);margin:0 0 8px}.news-art .cover{width:100%;max-height:420px;object-fit:cover;margin:12px 0}
+.md{overflow-wrap:anywhere;line-height:1.7}.md h2,.md h3,.md h4{font-family:'Barlow Condensed';color:var(--gold2);margin:22px 0 6px}.md p{margin:12px 0}.md img{max-width:100%;height:auto;display:block;margin:14px auto}.md a{color:var(--teal)}.md blockquote{margin:14px 0;padding:6px 14px;border-left:3px solid var(--gold);color:var(--mut)}.md ul{padding-left:22px}.md hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+.vmeta{padding:12px}.vmeta h3{margin:0 0 4px;font:700 20px 'Barlow Condensed';color:var(--gold2)}.vmeta p{margin:4px 0;font-size:14px;color:var(--mut)}.vmeta small{color:var(--mut)}
+.vthumb .play{position:absolute;inset:0;margin:auto;width:56px;height:56px;border-radius:50%;background:#000a;border:2px solid var(--gold)}.vthumb .play:after{content:"";position:absolute;left:22px;top:16px;border:11px solid transparent;border-left:17px solid var(--gold)}
+.vcands{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:12px;margin-top:12px}
+.vc{display:grid;gap:4px;padding:10px;border:1px solid var(--line);border-top:3px solid var(--c,var(--gold));background:#010a1388;cursor:pointer;position:relative;align-content:start}.vc.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}.vc input{position:absolute;opacity:0;pointer-events:none}.vc img,.vc .noimg{width:100%;aspect-ratio:1;object-fit:cover;display:grid;place-items:center;background:#0a1428;font:700 40px 'Barlow Condensed';color:var(--mut)}.vc b{font:700 20px 'Barlow Condensed';color:var(--gold2)}.vc small{font-size:12px}
+.vc:focus-within{outline:2px solid var(--teal);outline-offset:2px}
+.bar{position:relative;background:#0a1428;height:22px;margin-top:6px;border:1px solid var(--line)}.bar i{position:absolute;inset:0 auto 0 0;background:#c8aa6e88}.bar span{position:relative;font-size:12px;padding:0 6px;line-height:20px}
+.prefs{display:grid;gap:2px;margin:10px 0}
+.pwa-bar{position:fixed;left:0;right:0;top:0;z-index:60;padding:8px 14px;text-align:center;font-size:13px;padding-top:calc(8px + env(safe-area-inset-top,0px))}.pwa-bar.off{background:#6b2330;color:#ffe3e7}.pwa-bar.on{background:#0b5d4b;color:#d8fff3}
+.pwa-install{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:55;background:var(--gold);color:#1a1205;border:0;padding:10px 16px;font:700 15px 'Barlow Condensed';text-transform:uppercase;box-shadow:0 4px 18px #0008}
+.adm .row{display:flex;gap:8px}
+[data-theme=light] .insc,[data-theme=light] .bc,[data-theme=light] .ncard,[data-theme=light] .vc{background:#faf8f3}
+@media(max-width:700px){
+  .pform{grid-template-columns:1fr 1fr}.pform>b{grid-column:1/-1}
+  .bc-m.big{font-size:20px}.news-art{padding:14px}
+  .pwa-install{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .atabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}.atabs button{flex:none;padding:8px 14px}
+}

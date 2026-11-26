@@ -107,7 +107,7 @@ function Bracket({ B, T }) {
   );
 }
 
-export default function Site({ data: d }) {
+export default function Site({ data: d, extras = {} }) {
   const router = useRouter();
   useEffect(() => { const i = setInterval(() => { if (!document.hidden) router.refresh(); }, 30000); return () => clearInterval(i); }, [router]);
   const [tab, setTab] = useState('inicio');
@@ -132,7 +132,7 @@ export default function Site({ data: d }) {
       <Hero c={c} go={go} />
       <nav className="nav snav" aria-label="Seções"><div className="nav-in" role="tablist">
         {TABS.filter(([k]) => k !== 'live' || c.stream).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => go(k)}>{k === 'live' && <i className="ldot" aria-hidden />}{l}</button>)}
-        <a className="tablink" href="/estatisticas">Estatísticas</a><a className="tablink" href="/draft">Draft</a><a className="tablink" href="/simulador">Simulador</a><button className="themebtn" onClick={flip} aria-label="Alternar tema claro/escuro">{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
+        <a className="tablink" href="/estatisticas">Estatísticas</a><a className="tablink" href="/draft">Draft</a><a className="tablink" href="/simulador">Simulador</a><a className="tablink" href="/noticias">Notícias</a><a className="tablink" href="/transmissoes">Transmissões</a><a className="tablink" href="/votacao">Votação</a><a className="tablink" href="/hall-da-fama">Hall da Fama</a><a className="tablink" href="/temporadas">Temporadas</a><a className="tablink" href="/inscricao">Inscrição</a><button className="themebtn" onClick={flip} aria-label="Alternar tema claro/escuro">{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a className="admlink" href="/midia">Mídia</a><a className="admlink" href="/admin" style={{ marginLeft: 8 }}>Painel ADM</a>
       </div></nav>
       <main id="main" className="wrap">
         {tab === 'inicio' && <>
@@ -144,6 +144,10 @@ export default function Site({ data: d }) {
             <Panel title="Próximos confrontos">{next.length ? next.map((m) => <MatchRow key={m.id} m={m} T={T} name={m._n} />) : <p className="note">Nenhum confronto pendente.</p>}</Panel>
             <Panel title="Notícias e avisos">{(c.news || []).map((n, i) => <p className="news" key={i}>{n}</p>)}</Panel>
           </div>
+          {(extras.broadcasts?.length > 0 || extras.news?.length > 0 || extras.vagas) && <div className="g2">
+            <Panel title="Próximas transmissões" right={<a className="btn sm" href="/transmissoes">Calendário</a>}>{extras.broadcasts?.length ? extras.broadcasts.map((b) => <a key={b.id} className="news" style={{ display: 'block' }} href={'/transmissao/' + b.id}><b>{b.when}</b> · {b.title}{b.live && ' — AO VIVO'}</a>) : <p className="note">Nenhuma transmissão agendada.</p>}</Panel>
+            <Panel title="Últimas notícias" right={<a className="btn sm" href="/noticias">Ver todas</a>}>{extras.news?.length ? extras.news.map((n) => <a key={n.slug} className="news" style={{ display: 'block' }} href={'/noticias/' + n.slug}><b>{n.title}</b>{n.subtitle ? <><br /><small className="mut">{n.subtitle}</small></> : null}</a>) : <p className="note">Sem notícias publicadas.</p>}{extras.vagas && <p className="note">Vagas preenchidas: <b>{extras.vagas.filled}/{extras.vagas.total}</b> · <a href="/inscricao">Inscrever equipe</a></p>}</Panel>
+          </div>}
           <Panel title="Fase 2 — Mata-mata"><Bracket B={B} T={T} /></Panel>
         </>}
         {tab === 'live' && <>
@@ -198,7 +202,7 @@ export default function Site({ data: d }) {
       </nav>
       {more && <div className="sheet" onClick={() => setMore(false)}><div className="sheet-in" onClick={(e) => e.stopPropagation()} role="menu">
         {[['mata', 'Playoffs'], ['equipes', 'Equipes'], ['jogadores', 'Jogadores'], ['regras', 'Regulamento'], ...(c.stream ? [['live', 'Ao vivo']] : [])].map(([k, l]) => <button key={k} role="menuitem" onClick={() => go(k)}>{l}</button>)}
-        <a href="/draft">Draft</a><a href="/simulador">Simulador</a><a href="/midia">Mídia</a><button onClick={flip}>{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a href="/admin">Painel ADM</a>
+        <a href="/draft">Draft</a><a href="/simulador">Simulador</a><a href="/noticias">Notícias</a><a href="/transmissoes">Transmissões</a><a href="/vods">VODs</a><a href="/votacao">Votação MVP</a><a href="/hall-da-fama">Hall da Fama</a><a href="/temporadas">Temporadas</a><a href="/inscricao">Inscrição</a><a href="/notificacoes">Notificações</a><a href="/midia">Mídia</a><button onClick={flip}>{theme === 'light' ? 'Tema escuro' : 'Tema claro'}</button><a href="/admin">Painel ADM</a>
       </div></div>}
       <footer className="foot">Boa sorte a todos! · Projeto de fãs, não afiliado à Riot Games. League of Legends e as artes dos campeões são marcas e propriedade da Riot Games, Inc.</footer>
     </>

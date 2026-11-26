@@ -5,6 +5,7 @@ export const SEED = {
   media: { items: [], players: {} },
   games: {},
   config: {
+    seasonId: 's1',
     name: 'Copa Nexus de League of Legends',
     subtitle: 'Torneio internacional · 5 equipes · pontos corridos e mata-mata',
     bannerImage: 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Viego_0.jpg',
