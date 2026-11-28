@@ -77,6 +77,9 @@ public/       ícones e imagem de compartilhamento
 
 Painel novo: **/admin/gestao** (mesmo login do /admin; link "Gestão ampliada" no painel principal). Cada aba é protegida no servidor por papel.
 
+## Navegação
+O site usa um único menu hambúrguer (tela cheia no celular, lateral no computador) com todas as seções e páginas, mais atalhos na página inicial.
+
 ## Páginas públicas novas
 `/inscricao` · `/transmissoes` · `/transmissao/[id]` · `/noticias` · `/noticias/[slug]` · `/vods` · `/hall-da-fama` · `/votacao` · `/temporadas` · `/temporadas/[id]` · `/notificacoes` · `/offline`
 
@@ -134,6 +137,6 @@ Service worker e instalação do PWA exigem HTTPS (ou `localhost`) e `npm run bu
 ## Limitações conhecidas
 - Votos: identificar votantes sem login é aproximado. Quem limpa cookies pode votar de novo, até o limite de 3 por IP; pessoas na mesma rede podem esbarrar nesse limite. Para voto realmente nominal seria preciso login (ex.: Discord/Google).
 - Painel principal (`/admin`) e inscrições aprovadas gravam o mesmo documento: se o painel principal ficar aberto por muito tempo, **recarregue antes de salvar** depois de aprovar inscrições.
-- Imagens enviadas e depois removidas (capas, logos de inscrições rejeitadas) não são apagadas do Redis automaticamente.
+- Imagens trocadas ou removidas em notícias, narradores, VODs e premiações são apagadas do Redis. Logos de inscrições rejeitadas continuam guardadas como registro.
 - Offline: páginas já visitadas ficam salvas (até 60) e exibem faixa "offline + data da última sincronização"; páginas nunca abertas mostram `/offline`. Votar, inscrever-se e o painel exigem conexão.
 - Horários das partidas do painel antigo (contagem regressiva) usam o fuso do navegador; os lembretes usam `TOURNAMENT_TZ_OFFSET`.

@@ -7,7 +7,6 @@ import { list } from '@/lib/cms';
 import { bracket, teamMap, groups, KO } from '@/lib/logic';
 import { collect, rank, METRICS } from '@/lib/rank';
 import { dayBR, img } from '@/lib/pubview';
-import { slug } from '@/lib/players';
 export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }) { const m = await getMeta(params.id); return { title: m ? `${m.name} — Copa Nexus` : 'Temporada não encontrada' }; }
 export default async function Temporada({ params }) {

@@ -3,6 +3,11 @@ let n0 = 0;
 const adm = await imp('adm/[col]/route.js'), pub = await imp('pub/[col]/route.js');
 const P = (col) => ({ params: { col } });
 // ---- ETAPA 2
+{ const { putImg, getImg } = store; await putImg('aaaaaaaaaaaaaaaa', 'image/png', 'AAAA'); await putImg('bbbbbbbbbbbbbbbb', 'image/png', 'BBBB');
+  const x = await call(adm, 'POST', { name: 'Com Foto', role: 'observador', photo: 'aaaaaaaaaaaaaaaa' }, { cookie, params: { col: 'narradores' } });
+  ok(x.s === 200 && await getImg('aaaaaaaaaaaaaaaa'), 'foto salva');
+  await call(adm, 'POST', { ...x.j.item, photo: 'bbbbbbbbbbbbbbbb' }, { cookie, params: { col: 'narradores' } }); ok(!(await getImg('aaaaaaaaaaaaaaaa')) && await getImg('bbbbbbbbbbbbbbbb'), 'foto trocada apaga a antiga');
+  await call(adm, 'DELETE', null, { cookie, params: { col: 'narradores' }, qs: '?id=' + x.j.item.id }); ok(!(await getImg('bbbbbbbbbbbbbbbb')), 'excluir item apaga a imagem'); }
 let r = await call(adm, 'POST', { name: 'Narra' }, { params: { col: 'narradores' } }); ok(r.s === 401, 'crew sem login 401');
 r = await call(adm, 'POST', { name: 'João Narrador', role: 'narrador', social: { twitch: 'twitch.tv/joao' }, available: true }, { cookie, ...P('narradores') }); ok(r.s === 200 && r.j.item.social.twitch === 'https://twitch.tv/joao', 'cria narrador: ' + JSON.stringify(r.j)); const crew = r.j.item;
 r = await call(adm, 'POST', { name: 'X', role: 'chefe' }, { cookie, ...P('narradores') }); ok(r.s === 400, 'função inválida');

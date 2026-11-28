@@ -301,3 +301,19 @@ img,video,iframe,svg{max-width:100%}
 .sc:hover,.sc:focus-visible{border-color:var(--gold);background:#0c1e38;outline:0}.sc.gold{border-left-color:var(--gold);background:#c8aa6e22}
 @media(max-width:520px){.scgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.sc{padding:10px 12px}.sc b{font-size:17px}.brand{font-size:20px}}
 [data-theme=light] .sc{background:#fff}
+
+/* ===== Menu: tela cheia no celular, lateral inteira no computador, seções separadas ===== */
+.drawer{top:0;bottom:0;right:0;height:100vh;height:100dvh;width:min(440px,92vw);padding:0 0 calc(24px + env(safe-area-inset-bottom));background:var(--bg);display:flex;flex-direction:column;gap:12px}
+.drawer-h{flex:none;z-index:1;background:var(--p);border-bottom:2px solid var(--gold)}
+.drawer>nav{flex:none;margin:0 16px;border:1px solid var(--line);background:var(--p)}
+.drawer>nav h3{margin:0;padding:9px 16px;background:var(--p2);border-left:4px solid var(--gold);border-bottom:1px solid var(--line);font:700 15px 'Barlow Condensed';letter-spacing:.16em;color:var(--gold)}
+.drawer nav a,.drawer .dl{border-bottom:1px solid #1e3a5f55;padding:10px 16px}.drawer nav>:last-child{border-bottom:0}
+.drawer-h .btn{min-height:44px;padding:6px 16px}
+@media(max-width:700px){
+  .drawer-bg{background:var(--bg)}
+  .drawer{width:100vw;max-width:none;border-left:0;animation:fadein .15s}
+  .drawer>nav{margin:0 12px}
+  .drawer nav a,.drawer .dl{min-height:54px;font-size:22px}
+}
+@media(min-width:701px){.drawer>nav:first-of-type{margin-top:4px}}
+[data-theme=light] .drawer{background:#f3f0e8}[data-theme=light] .drawer>nav,[data-theme=light] .drawer-h{background:#fff}[data-theme=light] .drawer>nav h3{background:#efe9da}

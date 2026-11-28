@@ -33,7 +33,7 @@ export default function Menu({ sections = SECTIONS, active = '', onSelect, theme
       <button ref={btn} className="hb" aria-label="Abrir menu" aria-expanded={open} aria-controls="menu-drawer" onClick={() => setOpen(true)}><span /><span /><span /></button>
       {open && <div className="drawer-bg" onClick={() => setOpen(false)}>
         <aside id="menu-drawer" className="drawer" role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
-          <div className="drawer-h"><b>Copa Nexus</b><button ref={first} className="btn sm" onClick={() => setOpen(false)} aria-label="Fechar menu">✕</button></div>
+          <div className="drawer-h"><b>Copa Nexus</b><button ref={first} className="btn sm" onClick={() => setOpen(false)} aria-label="Fechar menu">✕ Fechar</button></div>
           <nav aria-label="Seções do torneio"><h3>Torneio</h3>{sections.map(([k, l]) => onSelect
             ? <button key={k} className={'dl' + (active === k ? ' on' : '')} aria-current={active === k ? 'page' : undefined} onClick={() => { onSelect(k); setOpen(false); }}>{l}</button>
             : <a key={k} href={k === 'inicio' ? '/' : '/#' + k} onClick={() => setOpen(false)}>{l}</a>)}</nav>

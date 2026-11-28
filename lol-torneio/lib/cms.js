@@ -5,6 +5,7 @@ import { ID_RE } from './media';
 import { parseLive } from './embed';
 import { LOCAL_RE } from './tz';
 import { hall, hset, hget, hdel } from './kv';
+import { delImg } from './store';
 
 export class Bad extends Error { constructor(m, code = 400) { super(m); this.code = code; } }
 export const rid = () => crypto.randomBytes(6).toString('hex');
@@ -110,6 +111,10 @@ export const COLS = {
   premiacoes: { key: 'lol-awards', sec: 'premiacoes', pub: live },
 };
 
+// Imagens trocadas ou removidas não ficam órfãs no Redis
+const IMG_FIELDS = ['cover', 'photo', 'preview', 'image'];
+const dropImgs = (old, item) => Promise.all(IMG_FIELDS.filter((f) => old?.[f] && old[f] !== item?.[f]).map((f) => delImg(old[f])));
+
 export async function list(col) { return (await hall(COLS[col].key)).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))); }
 export async function listPub(col) { const f = COLS[col].pub; return (await list(col)).map(f).filter(Boolean); }
 
@@ -132,10 +137,11 @@ export async function save(col, body, session) {
   const clean = await cleaners[col](body, old, ctx);
   const item = { ...clean, id: old?.id || rid(), createdAt: old?.createdAt || nowIso(), updatedAt: nowIso() };
   await hset(C.key, item.id, item);
+  if (old) await dropImgs(old, item);
   return { item, old };
 }
 export async function remove(col, id) {
   const C = COLS[col]; if (!C) throw new Bad('Coleção inexistente.', 404);
   const old = await hget(C.key, String(id)); if (!old) throw new Bad('Item não encontrado.', 404);
-  await hdel(C.key, old.id); return old;
+  await hdel(C.key, old.id); await dropImgs(old, null); return old;
 }
